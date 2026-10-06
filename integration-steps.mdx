@@ -1,68 +1,83 @@
 ---
 title: "Integration Steps"
-description: "A complete walkthrough of the EasyCred journey integration — from initiating a loan to reaching a terminal outcome."
+description: "A complete step-by-step developer guide for originating loans and driving customer journeys on the EASYCRED Partner API."
 sidebarTitle: "Integration Steps"
 ---
 
 ## Overview
 
-A journey has two parts: **start it (Step 1)**, then **drive it to a decision (Step 2)**. Step 2 differs by mode — Option A is headless, Option B is hosted.
+A loan integration with EASYCRED consists of two core steps:
+1. **Initiate the Journey:** Submit the applicant's profile and choose between Headless (`API_HEADLESS`) or Hosted (`API_HOSTED`) mode.
+2. **Drive the Journey:** Poll state and handle required actions (Headless) or direct the user to the EASYCRED screen (Hosted).
 
-<Note>
-  Do not assume a fixed sequence of steps — the exact order depends on the lender. Always branch on `currentNextAction.category`, not on the step name.
-</Note>
+### Base URLs
+
+<CardGroup cols={2}>
+  <Card title="Production" icon="shield-check">
+    `https://api.easycred.co.in`
+  </Card>
+  <Card title="Development / UAT" icon="flask-conical">
+    `https://dev.easycred.co.in`
+  </Card>
+</CardGroup>
 
 ---
 
-## Step 1 — Start a Loan Journey
+## Step 1: Initiate a Loan Journey
+
+Start an application by calling the initiate endpoint with customer data and your selected mode:
 
 ```http
-POST {baseurl}/v1/partner/journey/initiate
+POST {baseURL}/v1/partner/journey/initiate
 ```
 
-**Required scope:** `leads:create`
+**Required Scope:** `leads:create`  
+**Headers:** `x-api-key`, `x-timestamp`, `x-nonce`, `x-signature`, `Content-Type: application/json`
 
-### Request Body
+### Request Body Parameters
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `channel` | string | Yes | `"API_HOSTED"` or `"API_HEADLESS"` — chooses the mode |
-| `productCode` | string | Yes | `"ONLINE_PERSONAL"` or `"ONLINE_GOLD"` |
-| `mobile` | string | Yes | Customer's 10-digit mobile number |
-| `customer` | object | Yes | Applicant details — see table below |
-| `goldLoanDetails` | object | Conditional | Required when `productCode` is `ONLINE_GOLD` |
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `channel` | string | Yes | `"API_HOSTED"` or `"API_HEADLESS"` |
+| `productCode` | string | Yes | `"ONLINE_PERSONAL"`, `"ONLINE_SHORT_TERM"`, `"ONLINE_BUSINESS"`, or `"ONLINE_GOLD"` |
+| `mobile` | string | Yes | 10-digit Indian mobile number (e.g. `"9876543210"`) |
+| `customer` | object | Yes | Applicant profile information |
+| `goldLoanDetails` | object | Conditional | Required only if `productCode` is `"ONLINE_GOLD"` |
 
-### `customer` Object
+### `customer` Object Schema
 
 | Field | Type | Required | Validation / Notes |
-| --- | --- | --- | --- |
-| `pan` | string | Yes | Format `ABCDE1234F` |
+| :--- | :--- | :--- | :--- |
+| `pan` | string | Yes | Standard 10-character PAN format (`ABCDE1234F`) |
 | `dob` | string | Yes | `YYYY-MM-DD` |
-| `gender` | string | Yes | `MALE` / `FEMALE` / `TRANSGENDER` / `OTHER` |
+| `gender` | string | Yes | `"MALE"`, `"FEMALE"`, or `"OTHER"` |
 | `personalEmail` | string | Yes | Valid email address |
-| `employmentType` | string | Yes | `salaried` or `selfEmployed` |
-| `pinCode` | string | Yes | Exactly 6 digits |
+| `employmentType` | string | Yes | `"salaried"` or `"selfEmployed"` (Must be `"selfEmployed"` for Business Loans) |
+| `companyName` | string | Conditional | Required for `"ONLINE_BUSINESS"` (Registered trade or enterprise name) |
+| `pinCode` | string | Yes | 6-digit residential / operational PIN code |
 | `termsAccepted` | boolean | Yes | Must be `true` |
-| `monthlyIncome` / `annualIncome` | number | One of | Provide at least one |
-| `firstName`, `lastName`, `addressL1`, `city`, `state`… | string | No | Optional enrichment fields |
+| `monthlyIncome` / `annualIncome` | number | Yes | Provide `monthlyIncome` for personal/pocket loans; `annualIncome` for business loans |
+| `firstName`, `lastName` | string | No | Optional enrichment fields |
 
-### `goldLoanDetails` Object (Gold Loan Only)
+### `goldLoanDetails` Object (Gold Loans Only)
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `jewellaryList` | `string[]` | Yes | At least one item, e.g. `["Gold chain 22K"]` |
-| `grams` | string | Yes | Numeric string, e.g. `"35.5"` |
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `jewellaryList` | string[] | Yes | List of gold articles, e.g. `["Gold Bangle 22K", "Gold Chain 22K"]` |
+| `grams` | string | Yes | Gross gold weight in grams as a string, e.g. `"35.5"` |
 
-### Responses
+---
+
+### Initiate Responses
 
 <Tabs>
-  <Tab title="Headless Response">
+  <Tab title="Headless Mode (API_HEADLESS)">
     ```json
     {
       "success": true,
       "data": {
-        "journeyId": "jrn_<uuid>",
-        "journeySession": "<JWT — send via X-Journey-Session on later calls>",
+        "journeyId": "jrn_719b9dfa-741b-4c27-8a87-e0ab7f166520",
+        "journeySession": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         "nextAction": {
           "type": "POLL_FOR_OFFERS",
           "category": "POLL",
@@ -71,14 +86,16 @@ POST {baseurl}/v1/partner/journey/initiate
       }
     }
     ```
+    *Store `journeySession`. Pass it as the `X-Journey-Session` header on all subsequent calls for this journey.*
   </Tab>
-  <Tab title="Hosted Response">
+
+  <Tab title="Hosted Mode (API_HOSTED)">
     ```json
     {
       "success": true,
       "data": {
-        "journeyId": "jrn_<uuid>",
-        "hostedUrl": "https://<easycred-host>/loan/resume?t=<resume-token>",
+        "journeyId": "jrn_e631db9c-e36c-48c0-827c-9b8e21010041",
+        "hostedUrl": "https://dev.easycred.co.in/loan/resume?t=bb180fd9...",
         "nextAction": {
           "type": "POLL_FOR_OFFERS",
           "category": "POLL",
@@ -87,43 +104,30 @@ POST {baseurl}/v1/partner/journey/initiate
       }
     }
     ```
+    *Redirect the borrower to `hostedUrl` or embed it in a secure WebView.*
   </Tab>
 </Tabs>
 
-### Example — Start a Headless Personal Loan
-
-```bash
-BODY='{"channel":"API_HEADLESS","productCode":"ONLINE_PERSONAL","mobile":"9876543210","customer":{"pan":"ABCDE1234F","dob":"1990-01-15","gender":"MALE","personalEmail":"john@example.com","employmentType":"salaried","pinCode":"400001","monthlyIncome":75000,"termsAccepted":true}}'
-
-curl -s -X POST {baseurl}/v1/partner/journey/initiate \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: ec_live_a1b2c3d4_<48-hex>" \
-  -H "x-timestamp: 1749820800" \
-  -H "x-nonce: 550e8400-e29b-41d4-a716-446655440000" \
-  -H "x-signature: <computed-hex>" \
-  -d "$BODY"
-```
-
 ---
 
-## Step 2 (Option A) — Drive the Journey Yourself (Headless)
+## Step 2 (Option A): Drive Headless Journeys
 
-Poll the journey, then act on whatever it asks for.
+In Headless mode, your backend manages the borrower experience by polling state and submitting user actions.
 
-### Read Journey State
+### 1. Poll Journey State
 
 ```http
-GET {baseurl}/v1/partner/journey/{journeyId}
+GET {baseURL}/v1/partner/journey/{journeyId}
 ```
 
-**Required scope:** `leads:status:read`<br />**Headers:** `x-api-key`, `x-timestamp`, `x-nonce`, `x-signature`, `X-Journey-Session`
+**Headers:** Include `X-Journey-Session: <token>` in addition to your standard HMAC auth headers.
 
 ```json
 {
   "success": true,
   "data": {
-    "journeyId": "jrn_abc123",
-    "productCode": "ONLINE_PERSONAL",
+    "journeyId": "jrn_719b9dfa-741b-4c27-8a87-e0ab7f166520",
+    "productCode": "PERSONAL_LOAN",
     "channel": "API_HEADLESS",
     "currentNextAction": {
       "type": "POLL_FOR_OFFERS",
@@ -131,143 +135,141 @@ GET {baseurl}/v1/partner/journey/{journeyId}
       "pollIntervalSeconds": 10
     },
     "offers": [],
+    "referralOffers": [],
     "outcome": null
   }
 }
 ```
 
-### Branch on the Category
+### 2. Action Categories
 
-| Category | What it means | What you do |
-| --- | --- | --- |
-| `POLL` | EasyCred is working in the background | Wait `pollIntervalSeconds`, then read state again |
-| `COLLECT` | A customer choice is needed | Gather it, then submit an action (below) |
-| `REDIRECT` | A verification step (KYC / e-sign / mandate) | Open `currentNextAction.url`, then signal return |
-| `TERMINAL` | The journey is finished | Read `outcome` and stop polling |
+Branch your code according to `currentNextAction.category`:
+
+| Category | Meaning | Required Action |
+| :--- | :--- | :--- |
+| `POLL` | EASYCRED is processing data in the background | Sleep for `pollIntervalSeconds` and query state again. |
+| `COLLECT` | User selection or input is required | Prompt the user and submit an action payload to `POST /journey/{journeyId}/action`. |
+| `REDIRECT` | External verification required (KYC, e-Sign, e-NACH) | Direct the applicant to `currentNextAction.url`. Upon return, notify EASYCRED via `redirect-returned`. |
+| `TERMINAL` | Journey is concluded | Read `outcome` and cease polling. |
 
 ---
 
-### COLLECT — Submit a Customer Action
+### 3. Submit User Actions (`COLLECT`)
+
+When `category` is `COLLECT`, post the user's choice:
 
 ```http
-POST {baseurl}/v1/partner/journey/{journeyId}/action
+POST {baseURL}/v1/partner/journey/{journeyId}/action
 ```
 
-**Required scope:** `offers:select`<br />**Body:** `{ "kind": "<ActionKind>", "payload": { ... } }`
+**Required Scope:** `offers:select`  
+**Payload Format:** `{ "kind": "<ActionKind>", "payload": { ... } }`
 
-| Action Kind | Sent When Step Is | Payload Fields |
-| --- | --- | --- |
-| `SELECT_OFFER` | `SELECT_OFFER` | `offerId` (string), `loanAmount` (positive number) |
-| `SELECT_GOLD_LOAN_BRANCH` | `SELECT_GOLD_LOAN_BRANCH` | `offerId` (string), `branchLocationId` (string) |
-| `SUBMIT_BANK_ACCOUNT` | `SUBMIT_BANK_DETAILS` | `accHolderName`, `acctype` (`SAVING`/`CURRENT`), `accNo` (≥6 digits), `ifscCode` |
+#### Supported Action Kinds
 
-<Warning>
-  **Naming note:** For bank details the action `kind` is `SUBMIT_BANK_ACCOUNT`, but the journey step is reported as `SUBMIT_BANK_DETAILS`. Send the **kind**, match on the **step**.
-</Warning>
-
-#### Where Offer and Branch Values Come From
-
-When the journey reaches an offer step, the `offers[]` array in the journey state is populated. For gold loans, each offer also carries a `branchLocations[]` array:
-
-```json
-"offers": [
+- **Select Loan Offer (`SELECT_OFFER`):**
+  ```json
   {
-    "offerId": "019edb74-...-722b8e",
-    "branchLocations": [
-      {
-        "id": "019edb74-...-5aa5",
-        "branchName": "Ahmedabad - Panchvati",
-        "address": "CG Road, ..."
-      }
-    ]
+    "kind": "SELECT_OFFER",
+    "payload": {
+      "offerId": "01a10f78-403e-92bc-4890-50488113b866",
+      "loanAmount": 500000
+    }
   }
-]
+  ```
+- **Select Gold Loan Branch (`SELECT_GOLD_LOAN_BRANCH`):**
+  ```json
+  {
+    "kind": "SELECT_GOLD_LOAN_BRANCH",
+    "payload": {
+      "offerId": "01a10f78-403e-92bc-4890-50488113b866",
+      "branchLocationId": "01a10f78-4092-5ee8-9f91-c3120d03c530"
+    }
+  }
+  ```
+- **Submit Bank Account (`SUBMIT_BANK_ACCOUNT`):**
+  ```json
+  {
+    "kind": "SUBMIT_BANK_ACCOUNT",
+    "payload": {
+      "accHolderName": "Rahul Sharma",
+      "acctype": "SAVING",
+      "accNo": "123456789012",
+      "ifscCode": "HDFC0000128"
+    }
+  }
+  ```
+
+---
+
+### 4. Handle Verification Redirects (`REDIRECT`)
+
+When `category` is `REDIRECT`, open `currentNextAction.url` in a browser or WebView for the borrower (for KYC verification, e-NACH mandate registration, or digital loan agreement signing).
+
+Once the borrower completes the verification and returns to your application, inform EASYCRED:
+
+```http
+POST {baseURL}/v1/partner/journey/{journeyId}/redirect-returned
 ```
 
-Send the chosen entry's `id` as `branchLocationId`:
+**Payload:**
+```json
+{ "kind": "KYC" }
+```
+*(Use `"KYC"`, `"MANDATE"`, or `"ESIGN"` depending on the completed step).*
+
+Resume the `GET /journey/{journeyId}` poll loop immediately after signalling return.
+
+---
+
+### 5. Referral Offers (e.g. Apollo Finvest)
+
+When credit evaluations are completed or when alternative options exist, EASYCRED returns secondary referral offers in the journey state inside `data.referralOffers[]`:
 
 ```json
 {
-  "kind": "SELECT_GOLD_LOAN_BRANCH",
-  "payload": {
-    "offerId": "019edb74-...-722b8e",
-    "branchLocationId": "019edb74-...-5aa5"
+  "success": true,
+  "data": {
+    "journeyId": "jrn_719b9dfa-741b-4c27-8a87-e0ab7f166520",
+    "offers": [],
+    "referralOffers": [
+      {
+        "lenderCode": "APOLLO_FINVEST",
+        "name": "Apollo Finvest",
+        "redirectUrl": "https://dev.easycred.co.in/r/af83c1b"
+      }
+    ]
   }
 }
 ```
 
-#### Example — Select an Offer
-
-```bash
-curl -s -X POST {baseurl}/v1/partner/journey/jrn_abc123/action \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: ec_live_a1b2c3d4_<48-hex>" \
-  -H "x-timestamp: 1749820850" \
-  -H "x-nonce: 3d94e58c-1b47-4b9a-a9c3-af3b1e63e2f0" \
-  -H "x-signature: <computed-hex>" \
-  -H "X-Journey-Session: <journeySession>" \
-  -d '{"kind":"SELECT_OFFER","payload":{"offerId":"offer_xyz","loanAmount":500000}}'
-```
-
-<Info>
-  After any action, **resume the GET poll loop immediately**.
-</Info>
+- **Hosted Journeys (`API_HOSTED`):** The EASYCRED hosted page automatically displays the Apollo Finvest referral card with a dedicated CTA that securely routes the applicant through `/r/<code>`.
+- **Headless Journeys (`API_HEADLESS`):** EASYCRED does not send automated SMS messages in headless mode. Your application must inspect `data.referralOffers[]`, render the referral options in your custom UI, and provide the user with the corresponding `redirectUrl`.
 
 ---
 
-### REDIRECT — Open a Verification Link and Signal Return
+## Step 2 (Option B): Hosted Journey Tracking
 
-When the category is `REDIRECT`, open `currentNextAction.url` for the customer (new tab or WebView). It leads to a secure hosted page for KYC, e-sign, or e-NACH mandate.
+When using `API_HOSTED`, EASYCRED manages the entire borrower experience. Your backend does not make step-by-step action calls.
 
-When the customer returns to your app, signal the return:
-
-```http
-POST {baseurl}/v1/partner/journey/{journeyId}/redirect-returned
-```
-
-**Required scope:** `offers:select`<br />**Body:** `{ "kind": "KYC" }` — one of `KYC` | `ESIGN` | `MANDATE`
-
-| When the step is | Send kind |
-| --- | --- |
-| `REDIRECT_TO_KYC` | `KYC` |
-| `REDIRECT_TO_ESIGN` | `ESIGN` |
-| `REDIRECT_TO_MANDATE` | `MANDATE` |
-
-Then **resume the GET poll loop**.
+Track journey progress using either method:
+1. **Poll Application Status:**
+   ```http
+   GET {baseURL}/api/v1/partner/leads/{applicationId}/status
+   ```
+2. **Webhooks:** Configure a webhook endpoint to receive real-time HTTP POST notifications on all state transitions (see [Webhooks Guide](/webhooks)).
 
 ---
 
-## Step 2 (Option B) — Hand Off to EasyCred (Hosted)
+## Journey Terminal Outcomes
 
-After starting an `API_HOSTED` journey, hand `hostedUrl` to the customer (deep-link, WebView, or browser redirect). EasyCred's screens handle every step through to completion — **your backend makes no further journey calls**.
-
-To track progress:
-
-<CardGroup cols={2}>
-  <Card title="Poll Application Status" color="#4f46e5" icon="refresh-cw">
-    ```http
-    GET {baseurl}/v1/partner/leads/{applicationId}/status
-    ```
-
-    Requires only your API key — no journey session.
-  </Card>
-
-  <Card title="Subscribe to Webhooks" color="#0ea5e9" icon="webhook">
-    Subscribe with scope `webhooks:manage` to receive real-time push notifications as status changes happen.
-  </Card>
-</CardGroup>
-
----
-
-## Journey Outcomes (Terminal States)
-
-When the `category` is `TERMINAL`, read `data.outcome`:
+When `category` is `TERMINAL`, the journey is complete. Read `data.outcome`:
 
 | Outcome | Meaning |
-| --- | --- |
-| `COMPLETED` | Loan disbursed successfully |
-| `REJECTED` | The lender declined the application |
-| `NO_OFFERS_AVAILABLE` | No lender produced an offer in time |
-| `OFFLINE_PROCESSING` | A non-retryable issue — EasyCred operations will follow up |
-| `ABANDONED` | The journey exceeded its maximum number of poll attempts |
-| `EXPIRED` | The journey passed its time-to-live (72 hours by default) |
+| :--- | :--- |
+| `COMPLETED` | Loan sanctioned and successfully disbursed. |
+| `REJECTED` | The application could not be approved at this time. |
+| `NO_OFFERS_AVAILABLE` | No lending offers matched the applicant's profile. |
+| `OFFLINE_PROCESSING` | Routed to an EASYCRED field officer or branch team for physical fulfillment. |
+| `ABANDONED` | Borrower did not complete verification within the allotted timeout. |
+| `EXPIRED` | Application exceeded the 72-hour validity window. |

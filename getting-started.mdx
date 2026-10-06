@@ -10,13 +10,17 @@ This guide walks a partner engineer through a working integration in order: **ge
 
 ## Base URLs
 
-| Environment | Base URL |
-| --- | --- |
-| Production | `https://api.easycred.co.in` |
-| Interactive Spec | `GET {baseurl}/v1/openapi.json` (no auth) |
+<CardGroup cols={2}>
+  <Card title="Production" icon="shield-check">
+    `https://api.easycred.co.in`
+  </Card>
+  <Card title="Development / UAT" icon="flask-conical">
+    `https://dev.easycred.co.in`
+  </Card>
+</CardGroup>
 
 <Tip>
-  Import the OpenAPI spec into Postman or Swagger UI for an interactive explorer with all schemas.
+  Interactive OpenAPI specifications are available at `{baseURL}/api/v1/openapi.json`. Import into Postman or Swagger UI for schema exploration.
 </Tip>
 
 ## Two Integration Modes

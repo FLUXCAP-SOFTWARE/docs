@@ -1,79 +1,74 @@
 ---
 title: "Access Scope"
-description: "Your API key is granted a set of scopes that control which operations you can perform."
+description: "Permission scopes controlling real-time API operations on EASYCRED."
 sidebarTitle: "Access Scope"
 ---
 
 ## Overview
 
-Your API key is granted a set of **scopes** at onboarding. Each API endpoint requires a specific scope — calls made without the required scope return `403 Forbidden`.
+EASYCRED uses permission scopes to secure real-time API endpoints. Your API key is assigned scopes when created in the [Partner Portal](https://partner.easycred.co.in).
 
-## Required Scopes for Journey Integration
+Calls made without the required scope return `403 Forbidden`.
 
-A standard journey integration requires the following scopes:
+---
 
-<CardGroup cols={2}>
-  <Card title="leads:create" color="#16a34a">
-    **Required for:** Starting a journey
+## Real-Time API Scopes
 
-    `POST /api/v1/partner/journey/initiate`
-  </Card>
+<ResponseField name="leads:create" type="Core Journey">
+  Initiates real-time borrower loan journeys (both Hosted and Headless modes).
 
-  <Card title="offers:select" color="#4f46e5">
-    **Required for:** Submitting customer actions and signalling redirect-returned
+  **Endpoint:** `POST /v1/partner/journey/initiate`
+</ResponseField>
 
-    `POST /journey/{id}/action` and `/redirect-returned`
-  </Card>
+<ResponseField name="offers:read" type="Core Journey">
+  Retrieves approved loan offers and sanctioned credit terms from lending partners.
 
-  <Card title="leads:status:read" color="#0ea5e9">
-    **Required for:** Reading journey and application status
+  **Endpoint:** `GET /v1/partner/journey/:id`
+</ResponseField>
 
-    `GET /journey/{id}` and `GET /leads/{id}/status`
-  </Card>
+<ResponseField name="offers:select" type="Core Journey">
+  Submits borrower offer selections and drives downstream verification steps (KYC, mandate, e-sign).
 
-  <Card title="products:read" color="#f59e0b">
-    **Required for:** Listing the products enabled for your key
+  **Endpoint:** `POST /v1/partner/journey/:id/action`
+</ResponseField>
 
-    `GET /api/v1/partner/products`
-  </Card>
-</CardGroup>
+<ResponseField name="leads:status:read" type="Core Journey">
+  Checks real-time application status, journey stage, and disbursement progression.
 
-## Optional Scopes
+  **Endpoints:** `GET /v1/partner/journey/:id` and `GET /v1/partner/leads/:id/status`
+</ResponseField>
 
-<AccordionGroup>
-  <Accordion title="webhooks:manage" icon="webhook">
-    Allows you to create, update, and delete webhook subscriptions for real-time status notifications. Useful if you prefer push over polling.
-  </Accordion>
+<ResponseField name="products:read" type="Catalog">
+  Fetches the list of enabled real-time loan products and their validation rules.
 
-  <Accordion title="leads:read" icon="list">
-    Allows you to list your applications with pagination. Returns metadata only — **no raw PII is ever returned**.
+  **Endpoint:** `GET /v1/partner/products`
+</ResponseField>
 
-    `GET /api/v1/partner/leads?page=1&limit=20`
-  </Accordion>
-</AccordionGroup>
+<ResponseField name="leads:read" type="Reporting">
+  Lists historical loan applications submitted by your organization with pagination.
 
-## Scope Reference Table
+  **Endpoint:** `GET /v1/partner/leads`
+</ResponseField>
 
-| Scope | Required For | Endpoint |
-| --- | --- | --- |
-| `leads:create` | Start a journey | `POST /journey/initiate` |
-| `offers:select` | Submit actions & redirect-returned | `POST /journey/{id}/action` |
-| `leads:status:read` | Read journey/application status | `GET /journey/{id}`, `GET /leads/{id}/status` |
-| `products:read` | List enabled products | `GET /products` |
-| `webhooks:manage` | Manage webhook subscriptions | Webhook endpoints |
-| `leads:read` | List applications | `GET /leads` |
+<ResponseField name="webhooks:manage" type="Webhooks">
+  Registers and manages webhook subscription endpoints for real-time lifecycle event callbacks.
+
+  **Endpoint:** `POST /v1/partner/webhooks`
+</ResponseField>
+
+---
 
 ## Scope Errors
 
-If your API key lacks the required scope for an endpoint, you will receive:
+If an API call is made without the required scope, the server returns `403 Forbidden`:
 
 ```json
 {
   "success": false,
-  "error": "Forbidden — missing required scope"
+  "error": "Missing required scope: leads:create"
 }
 ```
 
-<Note>
-  A `403` response can also mean: the product is not in your `productAccess` list, or your key has been suspended or revoked. Contact your EasyCred onboarding manager to review your key's permissions.
-</Note>
+<Tip>
+  You can review your active API key scopes or request additional permissions directly in the **API & Credentials** section of the [Partner Portal](https://partner.easycred.co.in).
+</Tip>

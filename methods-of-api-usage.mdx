@@ -1,100 +1,70 @@
 ---
 title: "Methods of API Usage"
-description: "Choose between Hosted and Headless integration modes to match your customer experience requirements."
+description: "Choose between Hosted and Headless integration modes for originating loans on EASYCRED."
 sidebarTitle: "Methods of API Usage"
 ---
 
 ## Overview
 
-EasyCred offers two distinct integration modes. You select the mode **per request** when initiating a journey using the `channel` field. The rest of the journey flow depends on which mode you choose.
-
-## Comparison
+EASYCRED offers two integration modes. Select the mode per application when calling the initiate endpoint using the `channel` parameter.
 
 | Feature | Hosted (`API_HOSTED`) | Headless (`API_HEADLESS`) |
-| --- | --- | --- |
-| **Returns** | `hostedUrl` | `journeySession` |
-| **UI Ownership** | EasyCred owns the screens | You build and own the UI |
-| **Steps Handled By** | EasyCred (OTP, offers, KYC, e-sign, mandate) | Your backend via REST |
-| **Integration Effort** | Minimal | Full control |
-| **Best For** | Fastest time-to-market | Custom branded experience |
+| :--- | :--- | :--- |
+| **Response Payload** | `hostedUrl` | `journeySession` token |
+| **User Interface** | EASYCRED provides the complete UI | You design and build the borrower UI |
+| **Step Handling** | Managed by EASYCRED (offers, KYC, e-NACH, e-Sign) | Driven by your backend over REST |
+| **Referral Offers** | Rendered automatically on the hosted screen | Delivered in `data.referralOffers[]` for custom UI rendering |
+| **Best For** | Fastest go-live; zero frontend development | Deep native app integration with full UX ownership |
 
 ---
 
-## Hosted Mode (`API_HOSTED`)
+## 1. Hosted Mode (`API_HOSTED`)
 
-<Card title="API_HOSTED" color="#4f46e5" icon="globe">
-  Start a journey and get back a `hostedUrl`. Redirect the customer to it or embed it in a WebView. EasyCred's screens handle the entire loan journey through to completion.
-</Card>
+Start a journey and receive a single-use `hostedUrl`. Direct the customer to the URL in a browser or embed it within a secure WebView:
 
-**How it works:**
+```http
+POST /v1/partner/journey/initiate
+```
+```json
+{
+  "channel": "API_HOSTED",
+  "productCode": "ONLINE_PERSONAL",
+  "mobile": "9876543210",
+  "customer": { ... }
+}
+```
 
-<Steps>
-  <Step title="Initiate the Journey">
-    Call `POST /api/v1/partner/journey/initiate` with `channel: "API_HOSTED"`.
-  </Step>
-  <Step title="Redirect the Customer">
-    Use the returned `hostedUrl` to open EasyCred's hosted screens for your customer.
-  </Step>
-  <Step title="Track Progress">
-    Poll `GET /api/v1/partner/leads/{applicationId}/status` or subscribe to webhooks for real-time updates.
-  </Step>
-</Steps>
+EASYCRED manages the borrower through all intermediate phases: offer selection, KYC verification, mandate registration, e-Sign, and secondary referral offers (like Apollo Finvest).
 
-<Note>
-  In Hosted mode, `GET /journey/{journeyId}` (the headless state endpoint) requires a `journeySession` and **cannot** be used. Use the application-status endpoint or webhooks instead.
-</Note>
+**Tracking Progress:**
+- Poll application status: `GET /api/v1/partner/leads/{applicationId}/status`
+- Or receive live webhook updates on status transitions.
 
 ---
 
-## Headless Mode (`API_HEADLESS`)
+## 2. Headless Mode (`API_HEADLESS`)
 
-<Card title="API_HEADLESS" color="#0ea5e9" icon="terminal">
-  Your backend fully drives the loan journey over REST. You control every screen the customer sees, submitting their choices as actions and handling verification redirects.
-</Card>
+Your backend controls the applicant experience. Starting the journey returns a `journeySession` JWT token:
 
-**How it works:**
+```http
+POST /v1/partner/journey/initiate
+```
+```json
+{
+  "channel": "API_HEADLESS",
+  "productCode": "ONLINE_PERSONAL",
+  "mobile": "9876543210",
+  "customer": { ... }
+}
+```
 
-<Steps>
-  <Step title="Initiate the Journey">
-    Call `POST /api/v1/partner/journey/initiate` with `channel: "API_HEADLESS"`. You receive a `journeySession` token.
-  </Step>
-  <Step title="Poll Journey State">
-    Call `GET /api/v1/partner/journey/{journeyId}` with `X-Journey-Session` header to read the current `nextAction`.
-  </Step>
-  <Step title="Branch on Category">
-    Act on the `nextAction.category` — `POLL`, `COLLECT`, `REDIRECT`, or `TERMINAL`.
-  </Step>
-  <Step title="Submit Actions">
-    When the category is `COLLECT`, gather the customer's choice and `POST` it to `/journey/{journeyId}/action`.
-  </Step>
-  <Step title="Handle Redirects">
-    When the category is `REDIRECT`, open the verification URL for the customer, then signal return via `/redirect-returned`.
-  </Step>
-  <Step title="Read the Outcome">
-    When `TERMINAL`, read `data.outcome` and stop polling.
-  </Step>
-</Steps>
+### Headless Loop Architecture
 
----
-
-## Journey State Machine
-
-The journey always exposes a single `nextAction`. Your code branches on its `category`:
-
-<AccordionGroup>
-  <Accordion title="POLL — EasyCred is working in the background" icon="loader">
-    Wait `pollIntervalSeconds` then read state again. Do **not** call the lender directly.
-  </Accordion>
-
-  <Accordion title="COLLECT — A customer choice is needed" icon="file-input">
-    Gather the customer's input, then submit a POST action to the journey.
-  </Accordion>
-
-  <Accordion title="REDIRECT — A verification step" icon="arrow-up-right">
-    Open `currentNextAction.url` for the customer (KYC / e-sign / mandate). Signal return when done.
-  </Accordion>
-
-  <Accordion title="TERMINAL — The journey is finished" icon="database">
-    Read `outcome` and stop polling. See [Journey Outcomes](/integration-steps#journey-outcomes-terminal-states).
-  </Accordion>
-</AccordionGroup>
+1. **Poll State:** Call `GET /v1/partner/journey/{journeyId}` with `X-Journey-Session` to inspect `currentNextAction`.
+2. **Handle Actions:**
+   - **`POLL`:** Wait `pollIntervalSeconds` and read state again.
+   - **`COLLECT`:** Present choices to the borrower and post actions (e.g. `SELECT_OFFER`, `SELECT_GOLD_LOAN_BRANCH`, or `SUBMIT_BANK_ACCOUNT`) to `/journey/{journeyId}/action`.
+   - **`REDIRECT`:** Open verification URLs (KYC, e-Sign, e-NACH) for the borrower, then call `/redirect-returned` upon return.
+   - **`TERMINAL`:** Read `data.outcome` and conclude the journey.
+3. **Handle Referral Offers:**
+   When secondary lenders (such as Apollo Finvest) provide offers, they appear in `data.referralOffers[]`. Your app renders the offer card and opens the corresponding `redirectUrl`.

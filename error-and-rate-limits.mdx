@@ -1,12 +1,12 @@
 ---
 title: "Errors & Rate Limits"
-description: "Every EasyCred API response uses a consistent envelope. Learn how to handle errors and stay within rate limits."
+description: "Every EASYCRED API response uses a consistent envelope. Learn how to handle errors and manage rate limits."
 sidebarTitle: "Error & Rate Limits"
 ---
 
 ## Response Envelope
 
-Every response from the EasyCred API uses a single consistent envelope:
+Every response from the EASYCRED Partner API uses a consistent JSON envelope:
 
 <Tabs>
   <Tab title="Success">
@@ -36,8 +36,6 @@ Every response from the EasyCred API uses a single consistent envelope:
       ]
     }
     ```
-
-    On validation errors from `POST /journey/initiate`, the envelope also carries a field-level `details` array. Use it to point the customer at the exact field, and always fall back to the top-level `error`.
   </Tab>
 </Tabs>
 
@@ -46,69 +44,30 @@ Every response from the EasyCred API uses a single consistent envelope:
 ## HTTP Status Codes
 
 | Code | Meaning | Common Causes |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | `200` / `201` | Success / Created | Request processed successfully |
-| `400` | Validation error | Bad field value |
-| `401` | Authentication failed | Bad/missing signature, stale timestamp (\>±300s), replayed nonce, or missing journey session |
-| `403` | Authenticated but not allowed | Missing scope, product not granted, or key suspended/revoked |
-| `404` | Not found | Journey or application ID does not exist |
-| `409` | State conflict | Action sent at the wrong step, or a duplicate action in flight |
-| `429` | Rate limit exceeded | Too many requests — see rate limits below |
+| `400` | Validation Error | Malformed request body or invalid field values |
+| `401` | Authentication Failed | Invalid signature, stale timestamp (> ±300s), replayed nonce, or missing journey token |
+| `403` | Forbidden | Missing required scope or product not enabled for partner |
+| `404` | Not Found | Requested journey or application ID does not exist |
+| `409` | State Conflict | Action submitted at the wrong lifecycle step or duplicate in flight |
+| `429` | Rate Limit Exceeded | API request threshold exceeded |
 
 ---
 
 ## Rate Limits
 
-<CardGroup cols={2}>
-  <Card title="Per-Minute Limit" color="#4f46e5" icon="gauge">
-    **120 requests / minute** per API key
+| Metric | Default Threshold | Response Header |
+| :--- | :--- | :--- |
+| **Per-Minute Limit** | **120 requests / minute** per API key | `RateLimit-Remaining` |
+| **Per-Day Limit** | **20,000 requests / day** per API key | `RateLimit-Remaining-Day` |
 
-    Every response includes a `RateLimit-Remaining` header so you can track your usage.
-  </Card>
-
-  <Card title="Per-Day Limit" color="#0ea5e9" icon="calendar">
-    **20,000 requests / day** per API key
-
-    These are default limits — contact EasyCred if your integration needs higher throughput.
-  </Card>
-</CardGroup>
-
-### Retry Strategy
-
-<AccordionGroup>
-  <Accordion title="On 429 — Rate Limit Exceeded" icon="clock">
-    Back off and retry. Check the `RateLimit-Remaining` header and respect the `Retry-After` header if present. Use exponential backoff to avoid hammering the API.
-  </Accordion>
-
-  <Accordion title="On 409 — State Conflict (after an action)" icon="refresh-cw">
-    Re-read journey state and re-evaluate the category — **the journey has already advanced**. Do not blindly retry the same action.
-
-    Submitting the **same action twice is safe** — it is single-flight locked and a duplicate returns `409` without advancing the journey.
-  </Accordion>
-
-  <Accordion title="On 5xx — Server Error" icon="server">
-    Retry with exponential backoff. EasyCred's infrastructure is highly available, but transient errors can occur during maintenance windows.
-  </Accordion>
-</AccordionGroup>
+*Contact EASYCRED technical support if your integration requires custom throughput quotas.*
 
 ---
 
-## Error Handling Checklist
+## Best Practices for Errors
 
-<Steps>
-  <Step title="Check the success field">
-    Always check `response.success` before accessing `response.data`.
-  </Step>
-  <Step title="Handle validation errors">
-    For `400` from `/journey/initiate`, iterate `response.details` to surface field-specific messages to your user.
-  </Step>
-  <Step title="Never retry 403">
-    A `403` means your key lacks permission or the product isn't granted — retrying won't help. Check your scopes or contact EasyCred.
-  </Step>
-  <Step title="Re-read state on 409">
-    Don't retry the same action. Call `GET /journey/{journeyId}` to get the current `nextAction` and proceed from there.
-  </Step>
-  <Step title="Monitor RateLimit-Remaining">
-    Track the `RateLimit-Remaining` header and implement backoff before you hit `429`.
-  </Step>
-</Steps>
+- **On 429:** Implement exponential backoff with jitter and respect `RateLimit-Remaining` headers.
+- **On 409:** Re-query journey state (`GET /journey/{journeyId}`) — the journey state has already advanced.
+- **On 5xx:** Retry idempotent requests using exponential backoff.

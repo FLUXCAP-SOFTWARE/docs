@@ -1,67 +1,63 @@
 ---
 title: "Partner Portal Overview"
-description: "The EASYCRED Partner Platform enables DSA and channel partners to submit leads, track applications, and manage commission payouts."
+description: "The EASYCRED Partner Platform enables channel partners and developers to submit leads, track applications, and manage commission payouts."
 sidebarTitle: "Introduction"
 ---
 
-## What is the EASYCRED Partner Platform?
+## Overview
 
-The EASYCRED Partner Platform enables **DSA (Direct Selling Agent)** and channel partners to submit customer loan leads, track application lifecycles across multiple digital lenders, and manage commission payouts.
+The EASYCRED Partner Platform enables Direct Selling Agents (DSAs) and API partners to originate customer loans, monitor application lifecycles, and track commission earnings.
 
-<Info>
-  EASYCRED operates under RBI digital lending guidelines. All partner registrations are **invitation-only** to ensure compliance.
-</Info>
+---
 
-## Two Ways to Integrate
-
-Partners can interface with EASYCRED through two channels:
+## Two Integration Modes
 
 <CardGroup cols={2}>
-  <Card title="DSA Web Portal" color="#4f46e5" icon="layout-dashboard" href="/introduction-partner-portal">
-    A responsive UI for manual lead submission, document upload, offer selection, and payout tracking. No coding required.
+  <Card title="Partner Web Portal" icon="layout-dashboard" href="/dashboard">
+    Ready-to-use web interface for lead submission, document upload, offer review, and payout tracking. Zero coding required.
   </Card>
 
-  <Card title="Headless API" color="#0ea5e9" icon="terminal" href="/untitled-page">
-    A secure REST API for partners with custom CRM systems to programmatically submit leads, poll application states, select lender offers, and receive event webhooks.
+  <Card title="Partner API" icon="terminal" href="/api-introduction">
+    Secure REST API for developers and platforms to automate origination, poll statuses, submit choices, and receive webhooks.
   </Card>
 </CardGroup>
 
 ---
 
-## Partner Portal — At a Glance
+## Key Portal Sections
 
 <CardGroup cols={2}>
-  <Card title="Account Onboarding" icon="user-plus" href="/onboarding">
-    Invitation-only registration, admin approval, and DSA code assignment.
-  </Card>
-
   <Card title="Dashboard" icon="gauge" href="/dashboard">
-    Real-time metrics — total leads, active applications, sanctions, and commissions.
+    Real-time funnel metrics — total leads, active applications, sanctions, and earnings.
   </Card>
 
   <Card title="Lead Capture" icon="file-plus" href="/lead-capture">
-    Submit customer loan applications with personal, employment, and loan details.
+    Submit customer applications across retail and commercial credit products.
   </Card>
 
-  <Card title="Lead Tracking" icon="activity" href="/leads-and-applications">
-    Track every application status from `NEW` through to `SANCTIONED` or `REJECTED`.
+  <Card title="Leads & Applications" icon="activity" href="/leads-and-applications">
+    Track application progress from `NEW` through to `SANCTIONED` or `REJECTED`.
   </Card>
 
   <Card title="Lender Offers" icon="handshake" href="/lender-offers">
-    View and select lender credit offers, EMI details, and disbursal references.
+    Review credit offers, calculate EMIs, and select disbursement options.
   </Card>
 
-  <Card title="Commissions" icon="indian-rupee" href="/pricing">
-    Track pending, approved, and paid commission payouts.
+  <Card title="Product Access" icon="package" href="/product-access">
+    Inspect permissions for real-time digital loan products and offline desk operations.
+  </Card>
+
+  <Card title="Commissions" icon="wallet" href="/commissions">
+    Track commission approval statuses and bank transfer settlement records.
   </Card>
 </CardGroup>
 
 ---
 
-## Base URLs
+## Access the Partner Portal
 
-| Environment | URL |
-| --- | --- |
-| Partner Portal | `https://partners.easycred.co.in` |
-| API Gateway | `https://api.easycred.co.in/api/v1/partner` |
-| OpenAPI Spec | `GET https://api.easycred.co.in/api/v1/openapi.json` (no auth) |
+<Card
+  title="Open Partner Portal"
+  href="https://partner.easycred.co.in"
+>
+</Card>

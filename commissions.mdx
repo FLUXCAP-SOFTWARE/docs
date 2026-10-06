@@ -1,122 +1,29 @@
 ---
 title: "Commission Management"
-description: "Track your earnings lifecycle — from pending to approved to paid — and understand how commission structures work."
+description: "View and manage all your commission earnings and payout records directly in the EASYCRED Partner Portal."
 sidebarTitle: "Commissions"
 ---
 
 ## Overview
 
-The **Commissions** screen tracks the complete payout lifecycle for every sanctioned loan application linked to your partner account.
+All commission slabs, real-time earnings, approval stages, and bank transfer records are tracked and managed directly within the **EASYCRED Partner Portal**.
+
+When a loan application is successfully sanctioned and disbursed, the corresponding commission entry appears in your partner dashboard with full lifecycle tracking:
+
+- **Pending:** Loan disbursed; awaiting operational ledger verification.
+- **Approved:** Commission verified and queued for the next bank transfer run.
+- **Paid:** Payout completed to your registered bank account with a bank UTR number.
 
 ---
 
-## Commission Lifecycle
+## Access Your Commission Dashboard
 
-<Steps>
-  <Step title="Commission Generated">
-    When a lead reaches `SANCTIONED` status (loan disbursed), an earnings entry is automatically created in your commission ledger with `PENDING` status.
-  </Step>
-  <Step title="Operational Review">
-    The EASYCRED operations team reviews and verifies the commission entry against the lender disbursal confirmation.
-  </Step>
-  <Step title="Approved for Payment">
-    Verified commissions are marked `APPROVED` and queued for the next bank run.
-  </Step>
-  <Step title="Payment Transferred">
-    Funds are transferred to your registered bank account. The entry moves to `PAID` with a UTR reference.
-  </Step>
-</Steps>
+You can view your detailed commission statement, filter by date or product, and download GST payout invoices directly in the portal:
 
----
-
-## Commission Status Reference
-
-<CardGroup cols={2}>
-  <Card title="Pending" color="#f59e0b" icon="clock">
-    Earned commissions awaiting operational review and verification. The loan has been disbursed but the commission has not yet been confirmed.
-  </Card>
-
-  <Card title="Approved" color="#4f46e5" icon="circle-check">
-    Verified commissions confirmed and queued for the next bank transfer run.
-  </Card>
-
-  <Card title="Paid" color="#16a34a" icon="check-circle">
-    Disbursed commissions. The entry displays the bank transfer UTR reference code for your records.
-  </Card>
-
-  <Card title="On Hold" color="#ef4444" icon="pause-circle">
-    Commissions under dispute or requiring additional documentation before processing.
-  </Card>
-</CardGroup>
-
----
-
-## Commission Structures
-
-Commission rates are **partner-specific** and are configured by the EASYCRED admin team at the time of onboarding. Three structure types are supported:
-
-<AccordionGroup>
-  <Accordion title="Fixed — Flat amount per loan" icon="hash">
-    A fixed rupee amount is paid per successfully disbursed loan, regardless of the loan amount.
-
-    **Example:** ₹500 per sanctioned loan
-
-    Best for: Simple, predictable payout tracking.
-  </Accordion>
-
-  <Accordion title="Percentage — % of disbursed principal" icon="percent">
-    A percentage of the net disbursed loan amount is paid as commission.
-
-    **Example:** 1.5% of the disbursed principal
-
-    | Disbursed Amount | Commission @ 1.5% |
-    | --- | --- |
-    | ₹1,00,000 | ₹1,500 |
-    | ₹5,00,000 | ₹7,500 |
-    | ₹10,00,000 | ₹15,000 |
-
-    Best for: Partners incentivized to maximize loan amounts.
-  </Accordion>
-
-  <Accordion title="Slabs — Tiered rates by loan size" icon="layers">
-    Different rates apply to different disbursement bands, giving higher rates for larger loans.
-
-    **Example slab structure:**
-
-    | Disbursed Amount | Commission Rate |
-    | --- | --- |
-    | Up to ₹5,00,000 | 1.0% |
-    | ₹5,00,001 – ₹10,00,000 | 1.5% |
-    | Above ₹10,00,000 | 2.0% |
-
-    Best for: Partners with diverse loan size portfolios.
-  </Accordion>
-</AccordionGroup>
-
-<Note>
-  Your commission structure is defined at onboarding and applied automatically — you don't need to manually calculate payouts. Contact your EASYCRED relationship manager to discuss structure changes.
-</Note>
-
----
-
-## Tracking Payouts
-
-Each commission entry in the **Paid** tab includes:
-
-| Field | Description |
-| --- | --- |
-| **Application ID** | The loan application this commission relates to |
-| **Disbursed Amount** | The loan principal amount used to calculate the commission |
-| **Commission Amount** | The net commission credited to your account |
-| **Payment Date** | Date the bank transfer was initiated |
-| **UTR Reference** | Unique Transaction Reference for the bank transfer |
-
-<Tip>
-  Use the UTR Reference to reconcile commission payments in your own accounting records.
-</Tip>
-
----
-
-## Product Access & Eligibility
-
-Your commission eligibility depends on which loan products are enabled for your partner account. See [Product Access](/product-access) for details on which products you can submit leads for.
+<Card
+  title="Go to Partner Portal Commissions"
+  icon="wallet"
+  href="https://partner.easycred.co.in/commissions"
+>
+  Click here to open your commission dashboard in the EASYCRED Partner Portal.
+</Card>

@@ -1,26 +1,24 @@
 ---
 title: "Tracking Status & Notifications"
-description: "Monitor journey and application status at any time, independently of a live journey session."
+description: "Monitor journey and application statuses independently of a live journey session on EASYCRED."
 sidebarTitle: "Tracking Steps"
 ---
 
 ## Overview
 
-These endpoints work **at any time**, independent of a live journey session. Use them to monitor the state of applications and receive status notifications.
+These endpoints work at any time, independently of an active journey session. Use them to monitor the status of applications, fetch lead metadata, and receive real-time webhook events.
 
 ---
 
 ## List Enabled Products
 
-Check which loan products are enabled for your API key.
+Inspect which loan products are currently enabled for your API key:
 
 ```http
 GET /api/v1/partner/products
 ```
 
-**Required scope:** `products:read`
-
-**Example response:**
+**Required Scope:** `products:read`
 
 ```json
 {
@@ -30,14 +28,22 @@ GET /api/v1/partner/products
       {
         "code": "ONLINE_PERSONAL",
         "displayName": "Personal Loan",
-        "category": "ONLINE",
-        "channel": "API"
+        "category": "PERSONAL"
       },
       {
         "code": "ONLINE_GOLD",
         "displayName": "Gold Loan",
-        "category": "ONLINE",
-        "channel": "API"
+        "category": "GOLD"
+      },
+      {
+        "code": "ONLINE_SHORT_TERM",
+        "displayName": "Pocket Loan",
+        "category": "PERSONAL"
+      },
+      {
+        "code": "ONLINE_BUSINESS",
+        "displayName": "Business Loan",
+        "category": "BUSINESS"
       }
     ]
   }
@@ -46,88 +52,64 @@ GET /api/v1/partner/products
 
 ---
 
-## Get a Single Application's Status
+## Get Application Status
 
-Retrieve the current status of a specific loan application by its `applicationId`.
+Retrieve the current processing or terminal status of an application by its `applicationId`:
 
 ```http
 GET /api/v1/partner/leads/{applicationId}/status
 ```
 
-**Required scope:** `leads:status:read`
-
-**Example response:**
+**Required Scope:** `leads:status:read`  
+*Requires only standard HMAC headers — no `X-Journey-Session` token needed. Compatible with both hosted and headless applications.*
 
 ```json
 {
   "success": true,
   "data": {
-    "applicationId": "app_xyz",
+    "applicationId": "app_6aa8fe47fdcd2d2407fbcee6",
     "status": "COMPLETED"
   }
 }
 ```
 
-<Info>
-  This endpoint requires only your `x-api-key` and signing headers — **no `journeySession` is needed**. It works for both hosted and headless journeys.
-</Info>
-
 ---
 
-## List Your Applications
+## List Partner Leads
 
-Get a paginated list of all your loan applications. Returns metadata only — **no raw PII is ever returned**.
+Retrieve a paginated list of applications originated by your account. Returns operational metadata without exposing raw customer PII:
 
 ```http
 GET /api/v1/partner/leads?page=1&limit=20
 ```
 
-**Required scope:** `leads:read`
+**Required Scope:** `leads:read`
 
-### Query Parameters
-
-| Parameter | Type | Default | Max | Description |
-| --- | --- | --- | --- | --- |
-| `page` | integer | `1` | — | Page number (1-indexed) |
-| `limit` | integer | `20` | `100` | Results per page |
+| Query Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `page` | integer | `1` | Page index (1-based) |
+| `limit` | integer | `20` | Results per page (up to `100`) |
 
 ---
 
-## Webhooks
+## Webhooks vs. Polling
 
-For real-time push notifications instead of polling, subscribe to webhooks.
+EASYCRED supports asynchronous webhook delivery for status transitions:
 
-**Required scope:** `webhooks:manage`
+- **Webhooks:** Instant push notifications on state changes (`SANCTIONED`, `REJECTED`, etc.). Ideal for hosted integrations.
+- **Status Polling:** On-demand check for headless polling or fallback reconciliation.
 
-<CardGroup cols={2}>
-  <Card title="Advantages of Webhooks" color="#16a34a" icon="zap">
-    - Real-time updates — no polling delay
-    - Reduces API call volume
-    - Ideal for hosted mode integrations
-  </Card>
-
-  <Card title="When to Poll Instead" color="#4f46e5" icon="refresh-cw">
-    - During initial development and testing
-    - When webhook delivery is unreliable
-    - For headless mode (already polling journey state)
-  </Card>
-</CardGroup>
-
-<Note>
-  Contact your EasyCred onboarding manager to configure your webhook endpoint URL and the events you want to subscribe to.
-</Note>
+See the [Webhooks Guide](/webhooks) to configure endpoints and signature verification.
 
 ---
 
-## Status Values Reference
-
-These are the terminal status values you may see on applications:
+## Terminal Status Reference
 
 | Status | Description |
-| --- | --- |
-| `COMPLETED` | Loan disbursed successfully |
-| `REJECTED` | The lender declined the application |
-| `NO_OFFERS_AVAILABLE` | No lender produced an offer in time |
-| `OFFLINE_PROCESSING` | Non-retryable — EasyCred operations team will follow up |
-| `ABANDONED` | Journey exceeded maximum poll attempts |
-| `EXPIRED` | Journey passed its time-to-live (72 hours default) |
+| :--- | :--- |
+| `COMPLETED` | Loan successfully sanctioned and disbursed. |
+| `REJECTED` | Application did not meet credit criteria. |
+| `NO_OFFERS_AVAILABLE` | No offers returned for the applicant's profile. |
+| `OFFLINE_PROCESSING` | Assigned to an EASYCRED credit officer for physical follow-up. |
+| `ABANDONED` | Borrower timed out before completing verification. |
+| `EXPIRED` | Application exceeded the 72-hour journey TTL. |

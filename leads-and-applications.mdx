@@ -1,82 +1,33 @@
 ---
 title: "Lead Tracking & Applications"
-description: "Track all submitted loan applications through their lifecycle — from NEW to SANCTIONED or REJECTED."
+description: "Track all submitted loan applications through their lifecycle in the EASYCRED Partner Portal."
 sidebarTitle: "Leads & Applications"
 ---
 
 ## Overview
 
-The **Leads** index shows a filtered, searchable table of all applications submitted through your account. Statuses are projected into **coarse categories** to make reporting across different lender channels consistent and clean.
+The **Leads & Applications** section displays a searchable, filterable view of all loan applications submitted through your partner account. Statuses are mapped to standardized categories across all loan types.
 
 ---
 
-## Lead Status Reference
+## Status Reference
 
-<AccordionGroup>
-  <Accordion title="NEW — Lead captured" icon="circle-dot">
-    The lead has been recorded in the EASYCRED database. The system is evaluating lender routing rules.
-
-    **Required action:** None — wait for routing assignment.
-  </Accordion>
-
-  <Accordion title="INITIATED — Transmitted to lender" icon="send">
-    The lead has been transmitted to the lender's credit check system.
-
-    **Required action:** Awaiting lender validation results.
-  </Accordion>
-
-  <Accordion title="OFFERS_RECEIVED — Credit offers available" icon="hand-coins">
-    One or more lenders have returned credit offers for the customer.
-
-    **Required action:** Review the offers with the customer and select one. See [Lender Offers & Actions](/lender-offers).
-  </Accordion>
-
-  <Accordion title="OFFER_SELECTED — Lender offer confirmed" icon="check-circle">
-    The customer's chosen lender offer has been confirmed.
-
-    **Required action:** Direct the customer to complete KYC verification.
-  </Accordion>
-
-  <Accordion title="KYC_DONE — KYC verified" icon="user-check">
-    The customer's identity has been successfully verified by the lender's KYC system.
-
-    **Required action:** Customer must complete eNACH mandate authorization.
-  </Accordion>
-
-  <Accordion title="ENACH_DONE — Auto-debit authorized" icon="shield-check">
-    The customer has authorized the auto-debit mandate (eNACH) for EMI repayments.
-
-    **Required action:** Customer must eSign the loan agreement.
-  </Accordion>
-
-  <Accordion title="ESIGN_DONE — Agreement signed" icon="pen-line">
-    The loan agreement has been fully signed by the customer.
-
-    **Required action:** Awaiting final disbursal approval from the lender bank.
-  </Accordion>
-
-  <Accordion title="SANCTIONED — Loan disbursed ✓" icon="circle-check">
-    The loan has been approved and the funds have been disbursed to the customer's bank account.
-
-    **Result:** A commission entry is automatically generated for this lead.
-  </Accordion>
-
-  <Accordion title="REJECTED — Declined by lender" icon="x-circle">
-    The lender's credit policy has declined the application.
-
-    **Required action:** Review the applicant's profile and eligibility criteria. Consider re-applying after addressing the issues.
-  </Accordion>
-
-  <Accordion title="ABANDONED — No activity for 7+ days" icon="clock">
-    The customer did not act on the journey link or verification steps for 7 or more days.
-
-    **Required action:** Re-engage the customer to restart or reapply.
-  </Accordion>
-</AccordionGroup>
+| Status | Stage Meaning | Next Step / Description |
+| :--- | :--- | :--- |
+| `NEW` | Lead captured | Application recorded in EASYCRED system. |
+| `INITIATED` | Evaluation in progress | Credit parameters are being evaluated. |
+| `OFFERS_RECEIVED` | Credit offers available | Review available loan options with the applicant. |
+| `OFFER_SELECTED` | Offer confirmed | Applicant has confirmed their chosen loan option. |
+| `KYC_DONE` | Identity verified | Borrower has completed identity verification. |
+| `ENACH_DONE` | Auto-debit registered | Bank repayment mandate successfully established. |
+| `ESIGN_DONE` | Agreement signed | Digital loan agreement executed by the applicant. |
+| `SANCTIONED` | Loan disbursed ✓ | Funds credited to applicant's account. Commission entry generated. |
+| `REJECTED` | Application declined ✗ | Did not meet credit policy criteria. |
+| `ABANDONED` | Inactive | Borrower did not complete verification within the time limit. |
 
 ---
 
-## Status Flow Diagram
+## Lifecycle Flow
 
 ```text
 NEW
@@ -87,32 +38,19 @@ NEW
                      └── ENACH_DONE
                           └── ESIGN_DONE
                                └── SANCTIONED ✓
-                    (any point)
-                    └── REJECTED ✗
+                    (terminal)
+                    ├── REJECTED ✗
                     └── ABANDONED ✗
 ```
 
 ---
 
-## Filtering & Searching Leads
+## Filtering & Details
 
-The Leads table supports filtering by:
+Filter applications by:
+- **Status:** View leads by any active or terminal status.
+- **Date Range:** Filter by submission date window.
+- **Product Type:** Personal, Pocket, Business, Gold, LAP, Home, Car, Education, or Working Capital.
+- **Search:** Search by customer name, mobile number, or application ID.
 
-| Filter | Description |
-| --- | --- |
-| **Status** | Filter by any coarse status |
-| **Date Range** | Submission date window |
-| **Loan Type** | Personal, Gold, Business, etc. |
-| **Search** | Customer name, mobile, or application ID |
-
----
-
-## Application Details View
-
-Clicking **View** on any lead opens the full application detail screen showing:
-
-- Customer profile summary (no raw PII — partially masked)
-- Complete status timeline with timestamps
-- Lender offers (if any)
-- Disbursal details (if `SANCTIONED`) — including disbursed amount, date, and **UTR reference code**
-- Commission entry linked to this application
+Clicking **View** on any application displays the verified status timeline, sanctioned loan amount, disbursal date, and bank UTR reference code.

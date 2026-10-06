@@ -7,8 +7,12 @@
     },
     "servers": [
         {
-            "url": "https://api.easycred.in",
+            "url": "https://api.easycred.co.in",
             "description": "Production"
+        },
+        {
+            "url": "https://dev.easycred.co.in",
+            "description": "Development / UAT"
         }
     ],
     "components": {
@@ -448,7 +452,9 @@
                         ]
                     },
                     "companyName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Registered business name (required for ONLINE_BUSINESS journeys).",
+                        "example": "Acme Traders"
                     },
                     "monthlyIncome": {
                         "type": "number",
@@ -530,10 +536,12 @@
                         "enum": [
                             "ONLINE_PERSONAL",
                             "ONLINE_GOLD",
+                            "ONLINE_SHORT_TERM",
+                            "ONLINE_BUSINESS",
                             "PERSONAL_LOAN",
                             "GOLD_LOAN"
                         ],
-                        "description": "Catalog code (ONLINE_*) or legacy alias."
+                        "description": "Product catalog code: ONLINE_PERSONAL, ONLINE_SHORT_TERM (Pocket Loan), ONLINE_BUSINESS (Business Loan), or ONLINE_GOLD."
                     },
                     "mobile": {
                         "type": "string",
@@ -878,6 +886,13 @@
                             "null"
                         ],
                         "description": "Suggested poll cadence for the current POLL step."
+                    },
+                    "referralOffers": {
+                        "type": "array",
+                        "description": "Secondary referral offers (such as Apollo Finvest) available for the borrower.",
+                        "items": {
+                            "$ref": "#/components/schemas/ReferralOffer"
+                        }
                     }
                 },
                 "required": [
@@ -903,6 +918,28 @@
                 "required": [
                     "success",
                     "data"
+                ]
+            },
+            "ReferralOffer": {
+                "type": "object",
+                "properties": {
+                    "lenderCode": {
+                        "type": "string",
+                        "example": "APOLLO_FINVEST"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Apollo Finvest"
+                    },
+                    "redirectUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://dev.easycred.co.in/r/af83c1b"
+                    }
+                },
+                "required": [
+                    "lenderCode",
+                    "redirectUrl"
                 ]
             }
         }
@@ -1199,7 +1236,6 @@
                 }
             }
         },
-
         "/api/v1/partner/journey/initiate": {
             "post": {
                 "summary": "Initiate Loan Journey",

@@ -1,79 +1,78 @@
 ---
 title: "API Reference"
-description: "Interactive EasyCred Partner API reference — all endpoints, schemas, and authentication details."
+description: "Interactive EASYCRED Partner API reference — base URLs, endpoints, schemas, and authentication details."
 sidebarTitle: "Introduction"
 ---
 
 ## Overview
 
-The EasyCred Partner API is a REST API that returns JSON. All endpoints are under:
-
-```text
-https://api.easycred.co.in/api/v1/partner/
-```
-
-## Interactive Spec
-
-The full OpenAPI specification is available without authentication:
-
-```http
-GET https://api.easycred.co.in/api/v1/openapi.json
-```
+The EASYCRED Partner API is a REST API that returns JSON. All requests require HMAC-SHA256 authentication.
 
 <CardGroup cols={2}>
-  <Card title="Import into Postman" icon="box" href="https://api.easycred.co.in/api/v1/openapi.json">
-    Use **Import → Link** in Postman and paste the URL above to get a full interactive collection.
-  </Card>
+  <Card title="Production" icon="shield-check">
+    `https://api.easycred.co.in`
 
-  <Card title="Swagger UI" icon="code-xml" href="https://api.easycred.co.in/api/v1/openapi.json">
-    Import the URL into any Swagger UI instance for an interactive explorer with all schemas.
+    Live traffic and origination.
+  </Card>
+  <Card title="Development / UAT" icon="flask-conical">
+    `https://dev.easycred.co.in`
+
+    Integration testing and end-to-end verification.
   </Card>
 </CardGroup>
 
-## Authentication
+---
 
-All Partner API endpoints require HMAC-SHA256 signed requests. See the [Authentication guide](/authentication) for the full signing process.
+## Interactive OpenAPI Explorer
 
-At minimum, every request must include:
+Import our OpenAPI 3.1 specification directly into your preferred API client for automated schema validation and testing:
+
+<CardGroup cols={2}>
+  <Card title="Import into Postman" icon="box" href="https://api.easycred.co.in/api/v1/openapi.json">
+    Use **Import $\rightarrow$ Link** in Postman and paste the OpenAPI JSON URL for a complete collection.
+  </Card>
+
+  <Card title="Swagger UI" icon="code-xml" href="https://api.easycred.co.in/api/v1/openapi.json">
+    Import the URL into any Swagger UI or OpenAPI-compatible client.
+  </Card>
+</CardGroup>
+
+---
+
+## Required Authentication Headers
+
+Every API call must include four signature headers in addition to standard request headers:
 
 ```http
 x-api-key: ec_live_...
 x-timestamp: 1749820800
-x-nonce: <uuid-v4>
-x-signature: <hmac-sha256-hex>
+x-nonce: <unique-uuid-v4>
+x-signature: <computed-hmac-sha256-hex>
 ```
 
-## Step Names Reference (`nextAction.type`)
+For Headless journey state and action calls, also pass the journey session token:
+```http
+X-Journey-Session: <jwt-from-initiate>
+```
 
-<Warning>
-  Always branch on **`category`**, not on the exact step name — step names may grow over time. These are listed here for recognition only.
-</Warning>
+See the [Authentication Guide](/authentication) for request signing examples in Node.js, Python, and Java.
+
+---
+
+## Core Lifecycle Steps (`nextAction.type`)
+
+Branch your application logic on `nextAction.category`:
 
 | Category | Step Names |
-| --- | --- |
+| :--- | :--- |
 | `POLL` | `POLL_FOR_OFFERS`, `POLL_FOR_KYC_LINK`, `POLL_KYC_STATUS`, `POLL_FOR_ESIGN_LINK`, `POLL_FOR_MANDATE_LINK`, `POLL_FOR_DISBURSAL`, `POLL_FOR_UPDATED_GOLD_LOAN_OFFER` |
 | `COLLECT` | `SELECT_OFFER`, `SELECT_GOLD_LOAN_BRANCH`, `SUBMIT_BANK_DETAILS` |
 | `REDIRECT` | `REDIRECT_TO_KYC`, `REDIRECT_TO_ESIGN`, `REDIRECT_TO_MANDATE` |
 | `TERMINAL` | `COMPLETED`, `REJECTED`, `NO_OFFERS_AVAILABLE`, `OFFLINE_PROCESSING`, `ABANDONED`, `EXPIRED` |
 
-## Glossary
+---
 
-| Term | Meaning |
-| --- | --- |
-| `journeyId` | Stable ID for one loan journey (`jrn_<uuid>`) |
-| `journeySession` | Per-journey token from initiate; sent via `X-Journey-Session` on headless calls |
-| `nextAction` | The single next step the journey is waiting on, with its `category` |
-| `category` | The kind of next step: `POLL` / `COLLECT` / `REDIRECT` / `TERMINAL` — what your code branches on |
-| `outcome` | The final result, present only at a `TERMINAL` step |
+## Technical Support
 
-## Support
-
-Contact your EasyCred onboarding manager for:
-
-- Credentials and key rotation
-- Sandbox access
-- Integration help and troubleshooting
-
-<Info>
-  Email: [support@easycred.co.in](mailto:support@easycred.co.in)
-</Info>
+For UAT provisioning, credentials rotation, and integration assistance:
+- **Email:** [support@easycred.co.in](mailto:support@easycred.co.in)

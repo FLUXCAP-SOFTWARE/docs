@@ -1,36 +1,34 @@
 ---
-title: "Lender Offers & Actions"
-description: "Review credit offers returned by lenders and take actions to move the loan journey forward."
+title: "Loan Offers & Selection"
+description: "Review credit offers returned for applicants and select options to advance the loan journey."
 sidebarTitle: "Lender Offers"
 ---
 
 ## Overview
 
-When a loan application reaches `OFFERS_RECEIVED` status, the lender has returned one or more credit offers for the customer. You review these offers with the customer and select the one they want to proceed with.
+When an application reaches `OFFERS_RECEIVED` status, eligible credit offers are available for review. Partners can inspect details with the applicant and confirm their selection to proceed with verification and disbursal.
 
 ---
 
-## Viewing Offers
+## Offer Details
 
-Click **View** on any lead in `OFFERS_RECEIVED` status to open the offer selection screen.
-
-Each offer card displays:
+Each offer card provides key loan terms:
 
 <CardGroup cols={2}>
-  <Card title="Lender Details" icon="building-2">
-    Lender identity and their credit product name.
+  <Card title="Approved Principal" icon="indian-rupee">
+    Approved credit limit or loan amount sanctioned for the applicant.
   </Card>
 
-  <Card title="Principal & EMI" icon="calculator">
-    Approved loan principal amount and projected monthly EMI.
+  <Card title="Monthly EMI & Tenure" icon="calculator">
+    Projected monthly installment amount and repayment tenure.
   </Card>
 
-  <Card title="Interest & APR" icon="percent">
-    Annual interest rate and Annual Percentage Rate (APR) including all fees.
+  <Card title="Interest Rate & APR" icon="percent">
+    Annual interest rate and inclusive Annual Percentage Rate (APR).
   </Card>
 
-  <Card title="Net Disbursal" icon="indian-rupee">
-    Actual amount disbursed after deducting processing fees and insurance (if any).
+  <Card title="Net Disbursal Amount" icon="wallet">
+    Estimated proceeds disbursed to bank account after deducting applicable processing fees.
   </Card>
 </CardGroup>
 
@@ -38,52 +36,18 @@ Each offer card displays:
 
 ## Selecting an Offer
 
-<Steps>
-  <Step title="Review Offers with the Customer">
-    Present the available lender offers to the customer. Compare EMIs, interest rates, and net disbursed amounts.
-  </Step>
-  <Step title="Click Select This Offer">
-    Once the customer has chosen, click **Select This Offer** on the preferred card. The lead status moves to `OFFER_SELECTED`.
-  </Step>
-  <Step title="KYC & Verification Begins">
-    After offer selection, the platform loads the KYC and redirection workflow. The customer will be guided through identity verification, eNACH mandate, and eSign.
-  </Step>
-</Steps>
+1. **Review:** Present the available credit options to the customer.
+2. **Confirm:** Click **Select This Offer** on the preferred card. The application moves to `OFFER_SELECTED`.
+3. **Verification Steps:** The applicant is guided to complete KYC verification, e-NACH mandate registration, and digital agreement signing.
 
-<Warning>
-  Offer selection is **final** — once a lender offer is selected, it cannot be changed. Ensure the customer is certain before clicking **Select This Offer**.
-</Warning>
+<Note>
+  Offer selection is final and cannot be modified once confirmed.
+</Note>
 
 ---
 
-## Offer Comparison Tips
+## Secondary & Referral Offers
 
-<AccordionGroup>
-  <Accordion title="Lower EMI vs. Lower Total Cost" icon="scale">
-    A lower EMI often means a longer tenure and higher total interest paid. Help the customer understand the trade-off between monthly affordability and total cost of the loan.
-  </Accordion>
-
-  <Accordion title="Check the APR, Not Just the Interest Rate" icon="percent">
-    The APR includes processing fees, insurance premiums, and other charges — it is the true cost of the loan. Always compare APR across offers, not just the headline interest rate.
-  </Accordion>
-
-  <Accordion title="Net Disbursal Amount" icon="indian-rupee">
-    The net disbursed amount is what the customer actually receives in their bank account. If processing fees are high, the net disbursal may be significantly less than the approved principal.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## After Sanctioning
-
-Once the loan journey completes and the status moves to `SANCTIONED`, the application detail screen shows:
-
-| Field | Description |
-| --- | --- |
-| **Disbursed Amount** | Final amount credited to the customer's account |
-| **Disbursal Date** | Date the funds were transferred |
-| **UTR Reference** | Unique Transaction Reference code from the bank transfer |
-
-<Info>
-  The UTR reference is the definitive proof of disbursal. Share this with the customer if they need to verify the credit with their bank.
-</Info>
+If primary credit parameters require alternative solutions, secondary referral offers (such as Apollo Finvest) may be presented to the applicant:
+- In the portal and hosted journeys, referral offers appear with direct actions to evaluate specialized credit options.
+- In headless API journeys, these options are delivered in `data.referralOffers[]` for display in your custom application.

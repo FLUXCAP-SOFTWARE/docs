@@ -1,46 +1,56 @@
 ---
-title: "Products"
-description: "Your API key is granted access to a specific list of loan products via productAccess."
+title: "Loan Products"
+description: "Explore supported loan products, product codes, and initiate payloads on the EASYCRED Partner API."
 sidebarTitle: "Products"
 ---
 
 ## Overview
 
-Your API key is granted access to a specific list of loan products via `productAccess`. Attempting to initiate a product that is **not** in your list returns `403 Forbidden`.
+Your API key has access to a configured set of loan products via `productAccess`. When initiating a loan journey, you must pass one of the supported product codes.
 
-## Journey Products
+---
 
-The EasyCred journey flow supports the following products:
+## Supported Loan Products
 
 <CardGroup cols={2}>
-  <Card title="Personal Loan" color="#4f46e5">
+  <Card title="Personal Loan" icon="user">
     **Product Code:** `ONLINE_PERSONAL`
 
-    **Legacy alias:** `PERSONAL_LOAN` (also accepted)
-
-    A fully digital personal loan journey — from eligibility check through to disbursal.
+    Fully digital personal loan journey up to ₹35 Lakh for salaried and self-employed applicants.
   </Card>
 
-  <Card title="Gold Loan" color="#f59e0b">
+  <Card title="Pocket Loan" icon="zap">
+    **Product Code:** `ONLINE_SHORT_TERM`
+
+    Instant short-term personal credit (₹5,000 to ₹50,000) with rapid evaluation and swift disbursal.
+  </Card>
+
+  <Card title="Business Loan" icon="briefcase">
+    **Product Code:** `ONLINE_BUSINESS`
+
+    Unsecured business credit up to ₹50 Lakh. Requires registered business name and self-employed status.
+  </Card>
+
+  <Card title="Gold Loan" icon="coins">
     **Product Code:** `ONLINE_GOLD`
 
-    **Legacy alias:** `GOLD_LOAN` (also accepted)
-
-    A gold-secured loan journey that includes branch selection and physical gold evaluation.
+    Secured loan backed by physical gold jewellery, including branch selection and valuation.
   </Card>
 </CardGroup>
 
-## Checking Your Enabled Products
+---
 
-Use the products endpoint to see exactly which products are enabled for your API key:
+## Check Enabled Products
+
+Retrieve the real-time list of products active for your API key:
 
 ```http
 GET /api/v1/partner/products
 ```
 
-**Required scope:** `products:read`
+**Required Scope:** `products:read`
 
-**Example response:**
+### Response
 
 ```json
 {
@@ -50,34 +60,48 @@ GET /api/v1/partner/products
       {
         "code": "ONLINE_PERSONAL",
         "displayName": "Personal Loan",
-        "category": "ONLINE",
-        "channel": "API"
+        "category": "PERSONAL"
       },
       {
         "code": "ONLINE_GOLD",
         "displayName": "Gold Loan",
-        "category": "ONLINE",
-        "channel": "API"
+        "category": "GOLD"
+      },
+      {
+        "code": "ONLINE_SHORT_TERM",
+        "displayName": "Pocket Loan",
+        "category": "PERSONAL"
+      },
+      {
+        "code": "ONLINE_BUSINESS",
+        "displayName": "Business Loan",
+        "category": "BUSINESS"
       }
     ]
   }
 }
 ```
 
-## Product Codes
+---
 
-| Product Code | Display Name | Legacy Alias | Notes |
-| --- | --- | --- | --- |
-| `ONLINE_PERSONAL` | Personal Loan | `PERSONAL_LOAN` | Standard journey flow |
-| `ONLINE_GOLD` | Gold Loan | `GOLD_LOAN` | Requires `goldLoanDetails` in initiate request |
+## Product-Specific Payload Requirements
 
-## Gold Loan — Additional Requirements
+### 1. Personal Loan (`ONLINE_PERSONAL`) & Pocket Loan (`ONLINE_SHORT_TERM`)
+Standard applicant parameters inside the `customer` object:
+- `pan`, `dob`, `gender`, `personalEmail`, `mobile`, `pinCode`, `termsAccepted`
+- `employmentType`: `"salaried"` or `"selfEmployed"`
+- `monthlyIncome` (or `annualIncome`)
 
-When initiating a Gold Loan journey, you must include a `goldLoanDetails` object in the request body:
+### 2. Business Loan (`ONLINE_BUSINESS`)
+In addition to standard personal fields, business loan journeys require:
+- `customer.companyName`: Registered enterprise or trade name
+- `customer.employmentType`: Must be `"selfEmployed"`
+- `customer.annualIncome`: Annual business turnover / gross income
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `jewellaryList` | `string[]` | Yes | At least one item, e.g. `["Gold chain 22K"]` |
-| `grams` | `string` | Yes | Numeric string, e.g. `"35.5"` |
+### 3. Gold Loan (`ONLINE_GOLD`)
+Requires a dedicated `goldLoanDetails` object in the initiate request:
 
-See [Integration Steps](/integration-steps) for the full initiate request reference.
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `jewellaryList` | `string[]` | Yes | List of gold articles, e.g. `["Gold Bangle 22K", "Gold Chain 22K"]` |
+| `grams` | `string` | Yes | Total gross gold weight in grams, e.g. `"35.5"` |

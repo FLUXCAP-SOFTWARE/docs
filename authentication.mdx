@@ -1,130 +1,318 @@
 ---
 title: "Authentication"
-description: "Every request to the EasyCred Partner API is authenticated with your API key and an HMAC-SHA256 signature."
+description: "Authenticate requests to the EASYCRED Partner API with API keys and HMAC-SHA256 request signatures."
 sidebarTitle: "Authentication"
 ---
 
 ## Overview
 
-Every request to `/api/v1/partner/*` is authenticated with your **API key** and an **HMAC-SHA256 signature**. This proves the request came from you, was not tampered with, and cannot be replayed.
+All requests to the EASYCRED Partner API require an **API key** and an **HMAC-SHA256 signature**. This ensures every API transaction is authenticated, tamper-proof, and protected against replay attacks.
 
-## Required Headers
+---
 
-Every request must include all four of these headers:
+## Required Request Headers
 
-| Header | Value |
-| --- | --- |
-| `x-api-key` | Your full `ec_live_…` / `ec_test_…` API key |
-| `x-timestamp` | Current Unix time in whole seconds, as a string (e.g. `"1749820800"`) |
-| `x-nonce` | A unique value per request — a UUID v4 works well |
-| `x-signature` | Hex HMAC-SHA256 over the canonical signing string (see below) |
+Every call must include these four signature headers:
+
+| Header | Value | Description |
+| :--- | :--- | :--- |
+| `x-api-key` | `ec_live_j2n...` | Your active EASYCRED partner API key |
+| `x-timestamp` | String Unix epoch | Current Unix time in seconds (e.g. `"1749820800"`) |
+| `x-nonce` | Unique string | A unique identifier per request (UUID v4 recommended) |
+| `x-signature` | Hex HMAC-SHA256 | Signature computed over the canonical string |
 
 <Info>
-  **Headless sessions:** On calls made after you start a journey (poll, action, redirect-returned), also send the per-journey `journeySession` in the `X-Journey-Session` header (or the `journey_session` cookie). Never put it in `Authorization`, which is reserved for the API key.
+  **Headless Journeys:** On subsequent calls after initiating a headless journey (polling state, submitting actions, signaling return), also include the `X-Journey-Session` header with your journey token.
 </Info>
 
 ---
 
-## The Canonical Signing String
+## Canonical Signing String
 
-Build this exact **length-prefixed string**, then HMAC-SHA256 it with your `signingSecret` and hex-encode the result:
+Generate the length-prefixed canonical string below, sign it with your `signingSecret` using HMAC-SHA256, and hex-encode the result:
 
 ```text
 v1:<len(METHOD)>:<METHOD>:<len(PATH)>:<PATH>:<len(TIMESTAMP)>:<TIMESTAMP>:<len(NONCE)>:<NONCE>:<BODY>
 ```
 
-### Field Definitions
+### Components
 
-| Field | Description |
-| --- | --- |
-| `METHOD` | The HTTP verb in uppercase — `POST`, `GET` |
-| `PATH` | The request path **without** the query string (e.g. `/api/v1/partner/journey/jrn_abc/action`) |
-| `TIMESTAMP` | The exact value you put in `x-timestamp` |
-| `NONCE` | The exact value you put in `x-nonce` |
-| `BODY` | The exact raw request body. For GET requests (no body), use an empty string — **don't omit the field** |
+- `METHOD`: Uppercase HTTP verb (`POST` or `GET`).
+- `PATH`: Exact requested path without query parameters (e.g. `/v1/partner/journey/initiate` or `/api/v1/partner/products`).
+- `TIMESTAMP`: String value passed in `x-timestamp`.
+- `NONCE`: String value passed in `x-nonce`.
+- `BODY`: Raw JSON string payload. For `GET` requests (or requests without a body), use the empty string `""` (do not omit the trailing colon).
 
-### Example Signing String
-
-For a POST to `/api/v1/partner/journey/initiate`:
-
-```text
-v1:4:POST:34:/api/v1/partner/journey/initiate:10:1749820800:36:550e8400-e29b-41d4-a716-446655440000:{"channel":"API_HEADLESS",...}
-```
+<Warning>
+  **Exact Path Matching:** The `PATH` component in your HMAC string must match the exact path in your HTTP request. If you call `/v1/partner/journey/initiate`, sign `/v1/partner/journey/initiate`. If you call `/api/v1/partner/products`, sign `/api/v1/partner/products`.
+</Warning>
 
 ---
 
-## Nonce & Timestamp Rules
+## Security Windows
 
-<CardGroup cols={2}>
-  <Card title="Nonce Rules" color="#4f46e5">
-    - Printable ASCII, **1–200 characters**
-    - **Single-use** — a replayed nonce is rejected with `401`
-    - A UUID v4 is recommended
-  </Card>
-
-  <Card title="Timestamp Rules" color="#0ea5e9">
-    - Whole seconds (Unix epoch)
-    - Tolerance: **±300 seconds** from server time
-    - Requests outside the window are rejected with `401`
-  </Card>
-</CardGroup>
+- **Timestamp Drift:** Server validates timestamps within a **±300 second (5-minute)** window. Ensure server clocks are synchronized via NTP.
+- **Nonce Replay:** Each nonce is single-use. Replays within the validation window are rejected with `401 Unauthorized`.
 
 ---
 
-## Node.js Signing Helper
+## Implementation Examples
 
-Drop-in helper that produces the signed headers. The `x-signature` it returns is what the curl examples in this guide show as `<computed-hex>`.
+Use the tabs below to view end-to-end request signing and API invocation in your language of choice:
 
-```javascript
+<CodeGroup>
+
+```javascript Node.js
 import { createHmac, randomUUID } from 'crypto';
 
-function signRequest(
-  method,   // 'POST' | 'GET'
-  path,     // exclude the query string
-  body,     // JSON string, or '' for GET
-  apiKey,
-  secret,
-) {
-  const ts    = String(Math.floor(Date.now() / 1000));
+export function signRequest(method, path, body = '', apiKey, signingSecret) {
+  const timestamp = String(Math.floor(Date.now() / 1000));
   const nonce = randomUUID();
-  const str   =
-    `v1:${method.length}:${method}:${path.length}:${path}:${ts.length}:${ts}:${nonce.length}:${nonce}:${body}`;
-  const sig   = createHmac('sha256', secret).update(str).digest('hex');
+  const canonicalString =
+    `v1:${method.length}:${method}:${path.length}:${path}:${timestamp.length}:${timestamp}:${nonce.length}:${nonce}:${body}`;
+  const signature = createHmac('sha256', signingSecret).update(canonicalString).digest('hex');
+
   return {
     'Content-Type': 'application/json',
-    'x-api-key':    apiKey,
-    'x-timestamp':  ts,
-    'x-nonce':      nonce,
-    'x-signature':  sig,
+    'x-api-key': apiKey,
+    'x-timestamp': timestamp,
+    'x-nonce': nonce,
+    'x-signature': signature,
   };
+}
+
+// Example Request
+const path = '/v1/partner/journey/initiate';
+const requestBody = JSON.stringify({
+  channel: 'API_HEADLESS',
+  productCode: 'ONLINE_PERSONAL',
+  mobile: '9876543210',
+});
+
+const headers = signRequest(
+  'POST',
+  path,
+  requestBody,
+  process.env.EASYCRED_API_KEY,
+  process.env.EASYCRED_SIGNING_SECRET
+);
+
+const response = await fetch(`https://api.easycred.co.in${path}`, {
+  method: 'POST',
+  headers,
+  body: requestBody,
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import hmac
+import hashlib
+import time
+import uuid
+import json
+import os
+import requests
+
+def sign_request(method: str, path: str, body: str, api_key: str, signing_secret: str) -> dict:
+    timestamp = str(int(time.time()))
+    nonce = str(uuid.uuid4())
+    
+    canonical_string = (
+        f"v1:{len(method)}:{method}:{len(path)}:{path}:"
+        f"{len(timestamp)}:{timestamp}:{len(nonce)}:{nonce}:{body}"
+    )
+    signature = hmac.new(
+        signing_secret.encode('utf-8'),
+        canonical_string.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    return {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+        "x-timestamp": timestamp,
+        "x-nonce": nonce,
+        "x-signature": signature,
+    }
+
+# Example Request
+api_key = os.environ.get("EASYCRED_API_KEY")
+signing_secret = os.environ.get("EASYCRED_SIGNING_SECRET")
+path = "/v1/partner/journey/initiate"
+
+payload = {
+    "channel": "API_HEADLESS",
+    "productCode": "ONLINE_PERSONAL",
+    "mobile": "9876543210"
+}
+body_str = json.dumps(payload)
+
+headers = sign_request("POST", path, body_str, api_key, signing_secret)
+response = requests.post(f"https://api.easycred.co.in{path}", data=body_str, headers=headers)
+print(response.json())
+```
+
+```java Java
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+public class EasycredSigner {
+
+    public static Map<String, String> signRequest(
+            String method,
+            String path,
+            String body,
+            String apiKey,
+            String signingSecret
+    ) throws Exception {
+        String timestamp = String.valueOf(Instant.now().getEpochSecond());
+        String nonce = UUID.randomUUID().toString();
+        String safeBody = body != null ? body : "";
+
+        String canonicalString = String.format(
+            "v1:%d:%s:%d:%s:%d:%s:%d:%s:%s",
+            method.length(), method,
+            path.length(), path,
+            timestamp.length(), timestamp,
+            nonce.length(), nonce,
+            safeBody
+        );
+
+        Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+        SecretKeySpec secretKey = new SecretKeySpec(signingSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        sha256Hmac.init(secretKey);
+
+        byte[] hash = sha256Hmac.doFinal(canonicalString.getBytes(StandardCharsets.UTF_8));
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            hexString.append(String.format("%02x", b));
+        }
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("x-api-key", apiKey);
+        headers.put("x-timestamp", timestamp);
+        headers.put("x-nonce", nonce);
+        headers.put("x-signature", hexString.toString());
+        return headers;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String apiKey = System.getenv("EASYCRED_API_KEY");
+        String signingSecret = System.getenv("EASYCRED_SIGNING_SECRET");
+        String path = "/v1/partner/journey/initiate";
+        String body = "{\"channel\":\"API_HEADLESS\",\"productCode\":\"ONLINE_PERSONAL\",\"mobile\":\"9876543210\"}";
+
+        Map<String, String> headers = signRequest("POST", path, body, apiKey, signingSecret);
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.easycred.co.in" + path))
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+
+        headers.forEach(builder::header);
+
+        HttpResponse<String> response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        System.out.println("Status: " + response.statusCode());
+        System.out.println("Response: " + response.body());
+    }
 }
 ```
 
-### Usage Example
+```go Go
+package main
 
-```javascript
-const headers = signRequest(
-  'POST',
-  '/api/v1/partner/journey/initiate',
-  JSON.stringify(requestBody),
-  process.env.EASYCRED_API_KEY,
-  process.env.EASYCRED_SIGNING_SECRET,
-);
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
-const response = await fetch('https://api.easycred.co.in/api/v1/partner/journey/initiate', {
-  method: 'POST',
-  headers,
-  body: JSON.stringify(requestBody),
-});
+	"github.com/google/uuid"
+)
+
+func signRequest(method, path, body, apiKey, secret string) map[string]string {
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	nonce := uuid.New().String()
+
+	canonical := fmt.Sprintf("v1:%d:%s:%d:%s:%d:%s:%d:%s:%s",
+		len(method), method,
+		len(path), path,
+		len(timestamp), timestamp,
+		len(nonce), nonce,
+		body,
+	)
+
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(canonical))
+	signature := hex.EncodeToString(h.Sum(nil))
+
+	return map[string]string{
+		"Content-Type": "application/json",
+		"x-api-key":    apiKey,
+		"x-timestamp":  timestamp,
+		"x-nonce":      nonce,
+		"x-signature":  signature,
+	}
+}
+
+func main() {
+	apiKey := os.Getenv("EASYCRED_API_KEY")
+	secret := os.Getenv("EASYCRED_SIGNING_SECRET")
+	path := "/v1/partner/journey/initiate"
+	body := `{"channel":"API_HEADLESS","productCode":"ONLINE_PERSONAL","mobile":"9876543210"}`
+
+	headers := signRequest("POST", path, body, apiKey, secret)
+
+	req, _ := http.NewRequest("POST", "https://api.easycred.co.in"+path, strings.NewReader(body))
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	client := &http.Client{}
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(respBody))
+}
 ```
 
----
+```bash cURL
+API_KEY="$EASYCRED_API_KEY"
+SIGNING_SECRET="$EASYCRED_SIGNING_SECRET"
+PATH="/v1/partner/journey/initiate"
+TIMESTAMP=$(date +%s)
+NONCE=$(uuidgen | tr '[:upper:]' '[:lower:]')
+BODY='{"channel":"API_HEADLESS","productCode":"ONLINE_PERSONAL","mobile":"9876543210"}'
 
-## Common Authentication Errors
+CANONICAL="v1:4:POST:${#PATH}:${PATH}:${#TIMESTAMP}:${TIMESTAMP}:${#NONCE}:${NONCE}:${BODY}"
+SIGNATURE=$(echo -n "$CANONICAL" | openssl dgst -sha256 -hmac "$SIGNING_SECRET" | sed 's/^.* //')
 
-| Error | Cause | Fix |
-| --- | --- | --- |
-| `401` — bad signature | Wrong `signingSecret` or malformed canonical string | Verify the signing string construction |
-| `401` — stale timestamp | `x-timestamp` is more than 300s from server time | Sync your server clock (use NTP) |
-| `401` — replayed nonce | Same nonce used twice | Generate a fresh UUID per request |
-| `401` — missing journey session | Headless call without `X-Journey-Session` | Add the `journeySession` from the initiate response |
+curl -X POST "https://api.easycred.co.in${PATH}" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: ${API_KEY}" \
+  -H "x-timestamp: ${TIMESTAMP}" \
+  -H "x-nonce: ${NONCE}" \
+  -H "x-signature: ${SIGNATURE}" \
+  -d "${BODY}"
+```
+
+</CodeGroup>

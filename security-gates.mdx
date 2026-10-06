@@ -38,7 +38,7 @@ The gateway compares the `x-timestamp` header value against the server's current
 
 ## Nonce Replay Gate
 
-Every request must include a unique `x-nonce` value. The gateway stores all nonces seen within the drift window in a **distributed Redis cache**.
+Every request must include a unique `x-nonce` value. The gateway tracks all nonces seen within the drift window.
 
 If a request arrives with a nonce that has already been used within the window, it is immediately rejected:
 

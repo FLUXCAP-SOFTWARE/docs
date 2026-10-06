@@ -9,6 +9,10 @@
         {
             "url": "https://api.easycred.co.in",
             "description": "Production"
+        },
+        {
+            "url": "https://dev.easycred.co.in",
+            "description": "Development / UAT"
         }
     ],
     "components": {
@@ -448,7 +452,9 @@
                         ]
                     },
                     "companyName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Registered business name (required for ONLINE_BUSINESS journeys).",
+                        "example": "Acme Traders"
                     },
                     "monthlyIncome": {
                         "type": "number",
@@ -530,10 +536,12 @@
                         "enum": [
                             "ONLINE_PERSONAL",
                             "ONLINE_GOLD",
+                            "ONLINE_SHORT_TERM",
+                            "ONLINE_BUSINESS",
                             "PERSONAL_LOAN",
                             "GOLD_LOAN"
                         ],
-                        "description": "Catalog code (ONLINE_*) or legacy alias."
+                        "description": "Product catalog code: ONLINE_PERSONAL, ONLINE_SHORT_TERM (Pocket Loan), ONLINE_BUSINESS (Business Loan), or ONLINE_GOLD."
                     },
                     "mobile": {
                         "type": "string",
@@ -878,6 +886,13 @@
                             "null"
                         ],
                         "description": "Suggested poll cadence for the current POLL step."
+                    },
+                    "referralOffers": {
+                        "type": "array",
+                        "description": "Secondary referral offers (such as Apollo Finvest) available for the borrower.",
+                        "items": {
+                            "$ref": "#/components/schemas/ReferralOffer"
+                        }
                     }
                 },
                 "required": [
@@ -904,6 +919,28 @@
                     "success",
                     "data"
                 ]
+            },
+            "ReferralOffer": {
+                "type": "object",
+                "properties": {
+                    "lenderCode": {
+                        "type": "string",
+                        "example": "APOLLO_FINVEST"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Apollo Finvest"
+                    },
+                    "redirectUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://dev.easycred.co.in/r/af83c1b"
+                    }
+                },
+                "required": [
+                    "lenderCode",
+                    "redirectUrl"
+                ]
             }
         }
     },
@@ -915,7 +952,7 @@
     "paths": {
         "/api/v1/partner/products": {
             "get": {
-                "summary": "List products enabled for the authenticated client (API-transactable products only).",
+                "summary": "List Products",
                 "security": [
                     {
                         "bearerAuth": [
@@ -998,7 +1035,7 @@
         },
         "/api/v1/partner/leads": {
             "get": {
-                "summary": "List application metadata for the partner (no PII).",
+                "summary": "List Applications",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1100,7 +1137,7 @@
         },
         "/api/v1/partner/leads/{applicationId}/status": {
             "get": {
-                "summary": "Get the projected status of a single application.",
+                "summary": "Get Application Status",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1199,10 +1236,9 @@
                 }
             }
         },
-
         "/api/v1/partner/journey/initiate": {
             "post": {
-                "summary": "Initiate a loan journey (API_HOSTED → resume link, or API_HEADLESS → journeySession (cookie or X-Journey-Session header)).",
+                "summary": "Initiate Loan Journey",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1305,7 +1341,7 @@
         },
         "/api/v1/partner/journey/{journeyId}/action": {
             "post": {
-                "summary": "Submit a customer action (SELECT_OFFER / SELECT_GOLD_LOAN_BRANCH / SUBMIT_BANK_ACCOUNT). API_HEADLESS only — also send the journeySession (from initiate) in the journey_session cookie or X-Journey-Session header.",
+                "summary": "Submit Customer Action",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1436,7 +1472,7 @@
         },
         "/api/v1/partner/journey/{journeyId}/redirect-returned": {
             "post": {
-                "summary": "Signal that the customer has returned from a hosted redirect step (KYC / eSign / mandate). Flips the journey to the matching POLL_* step and re-arms the reconciler. API_HEADLESS only — also send the journeySession (from initiate) in the journey_session cookie or X-Journey-Session header.",
+                "summary": "Signal Redirect Returned",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1567,7 +1603,7 @@
         },
         "/api/v1/partner/journey/{journeyId}": {
             "get": {
-                "summary": "Read the mirrored journey state (offers / selectedOffer / nextAction / outcome). API_HEADLESS only — also send the journeySession (from initiate) in the journey_session cookie or X-Journey-Session header.",
+                "summary": "Get Journey State",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1668,7 +1704,7 @@
         },
         "/api/v1/partner/webhooks": {
             "get": {
-                "summary": "List the partner's webhook subscriptions (secrets are never returned).",
+                "summary": "List Webhook Subscriptions",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1749,7 +1785,7 @@
                 }
             },
             "post": {
-                "summary": "Register a webhook subscription. The signing secret is returned ONCE in the response.",
+                "summary": "Register Webhook",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1852,7 +1888,7 @@
         },
         "/api/v1/partner/webhooks/{subscriptionId}/rotate-secret": {
             "post": {
-                "summary": "Rotate the HMAC signing secret. The new secret is returned ONCE in the response.",
+                "summary": "Rotate Webhook Secret",
                 "security": [
                     {
                         "bearerAuth": [
@@ -1953,7 +1989,7 @@
         },
         "/api/v1/partner/webhooks/{subscriptionId}": {
             "delete": {
-                "summary": "Delete a webhook subscription.",
+                "summary": "Delete Webhook",
                 "security": [
                     {
                         "bearerAuth": [
@@ -2001,59 +2037,6 @@
                 "responses": {
                     "200": {
                         "description": "Success",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/WebhookDeleteResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiError"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Authenticated but missing the required scope / product access.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiError"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Resource not found.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiError"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "Rate limit exceeded.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ApiError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}               "description": "Success",
                         "content": {
                             "application/json": {
                                 "schema": {
