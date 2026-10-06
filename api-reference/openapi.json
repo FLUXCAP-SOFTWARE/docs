@@ -1,0 +1,2056 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "EASYCRED Partner API",
+        "version": "1.0.0",
+        "description": "EASYCRED-managed secure partner API. All requests require a Bearer API key plus HMAC request signing (X-Signature / X-Timestamp / X-Nonce). No raw customer PII is exposed by this version. Signing convention: the HMAC-SHA256 is computed over method, path, timestamp, nonce and the raw request body. For GET requests (and any request with no body) the body component is the EMPTY string '' — sign over '' for those requests."
+    },
+    "servers": [
+        {
+            "url": "https://api.easycred.in",
+            "description": "Production"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "API key of the form ec_(live|test)_<prefix>_<secret>. Scopes are listed per operation."
+            }
+        },
+        "schemas": {
+            "ApiError": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": false
+                    },
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "success",
+                    "error"
+                ]
+            },
+            "Product": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "OFFLINE",
+                            "ONLINE"
+                        ]
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "displayName",
+                    "category",
+                    "channel",
+                    "provider",
+                    "icon"
+                ]
+            },
+            "LeadSummary": {
+                "type": "object",
+                "description": "Application metadata only — never raw PII or encrypted fields.",
+                "properties": {
+                    "applicationId": {
+                        "type": "string"
+                    },
+                    "loanType": {
+                        "type": "string"
+                    },
+                    "loanAmount": {
+                        "type": "number"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "applicationId"
+                ]
+            },
+            "ProductListResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "products": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        },
+                        "required": [
+                            "products"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "LeadListResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "leads": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/LeadSummary"
+                                }
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "page": {
+                                "type": "integer"
+                            },
+                            "limit": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "leads",
+                            "total",
+                            "page",
+                            "limit"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "LeadStatusResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "applicationId": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "applicationId",
+                            "status"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "WebhookSubscription": {
+                "type": "object",
+                "description": "A registered webhook subscription (the signing secret is never echoed here).",
+                "properties": {
+                    "subscriptionId": {
+                        "type": "string",
+                        "description": "Stable id of the form whs_<uuid>."
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "HTTPS delivery endpoint (public host only)."
+                    },
+                    "subscribedEvents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "journey.initiated",
+                                "journey.updated",
+                                "journey.completed",
+                                "journey.rejected",
+                                "journey.failed"
+                            ]
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean"
+                    },
+                    "failureCount": {
+                        "type": "integer"
+                    },
+                    "lastDeliveryAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "subscriptionId",
+                    "url",
+                    "subscribedEvents",
+                    "isActive",
+                    "failureCount"
+                ]
+            },
+            "WebhookListResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "subscriptions": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/WebhookSubscription"
+                                }
+                            }
+                        },
+                        "required": [
+                            "subscriptions"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "WebhookCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "HTTPS endpoint; must not target a private host/IP."
+                    },
+                    "events": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "journey.initiated",
+                                "journey.updated",
+                                "journey.completed",
+                                "journey.rejected",
+                                "journey.failed"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "url",
+                    "events"
+                ]
+            },
+            "WebhookCreateResponse": {
+                "type": "object",
+                "description": "Returned on create. The plaintext `secret` is shown ONCE — store it now.",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "subscriptionId": {
+                                "type": "string"
+                            },
+                            "secret": {
+                                "type": "string",
+                                "description": "HMAC signing secret. Returned exactly once."
+                            }
+                        },
+                        "required": [
+                            "subscriptionId",
+                            "secret"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "WebhookSecretResponse": {
+                "type": "object",
+                "description": "Returned on rotate-secret. The new plaintext `secret` is shown ONCE.",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "secret": {
+                                "type": "string",
+                                "description": "New HMAC signing secret. Returned exactly once."
+                            }
+                        },
+                        "required": [
+                            "secret"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "WebhookDeleteResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "deleted": {
+                                "type": "boolean",
+                                "const": true
+                            }
+                        },
+                        "required": [
+                            "deleted"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "NextAction": {
+                "type": "object",
+                "description": "The mirrored next step the client must drive (POLL / REDIRECT / COLLECT / TERMINAL).",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "e.g. POLL_FOR_OFFERS, SELECT_OFFER, SUBMIT_BANK_DETAILS, REDIRECT_TO_KYC, COMPLETED."
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "POLL",
+                            "REDIRECT",
+                            "COLLECT",
+                            "TERMINAL"
+                        ]
+                    }
+                },
+                "required": [
+                    "type"
+                ]
+            },
+            "UserDetails": {
+                "type": "object",
+                "description": "Applicant details. Provide monthlyIncome OR annualIncome (at least one).",
+                "required": [
+                    "pan",
+                    "dob",
+                    "gender",
+                    "personalEmail",
+                    "employmentType",
+                    "pinCode",
+                    "termsAccepted"
+                ],
+                "properties": {
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "pan": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$",
+                        "example": "DJHPG8765E"
+                    },
+                    "dob": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "description": "YYYY-MM-DD.",
+                        "example": "1990-05-01"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "MALE",
+                            "FEMALE",
+                            "TRANSGENDER",
+                            "OTHER"
+                        ]
+                    },
+                    "personalEmail": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "officialEmail": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "employmentType": {
+                        "type": "string",
+                        "enum": [
+                            "salaried",
+                            "selfEmployed"
+                        ]
+                    },
+                    "companyName": {
+                        "type": "string"
+                    },
+                    "monthlyIncome": {
+                        "type": "number",
+                        "description": "Provide this OR annualIncome."
+                    },
+                    "annualIncome": {
+                        "type": "number",
+                        "description": "Provide this OR monthlyIncome."
+                    },
+                    "addressL1": {
+                        "type": "string"
+                    },
+                    "addressL2": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "pinCode": {
+                        "type": "string",
+                        "pattern": "^\\d{6}$",
+                        "description": "Note: camelCase pinCode.",
+                        "example": "560001"
+                    },
+                    "endUse": {
+                        "type": "string"
+                    },
+                    "termsAccepted": {
+                        "type": "boolean",
+                        "enum": [
+                            true
+                        ],
+                        "description": "Must be true."
+                    }
+                }
+            },
+            "GoldLoanDetails": {
+                "type": "object",
+                "description": "Required when productCode is ONLINE_GOLD.",
+                "required": [
+                    "jewellaryList",
+                    "grams"
+                ],
+                "properties": {
+                    "jewellaryList": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "example": [
+                            "Gold Ring",
+                            "Gold Chain"
+                        ]
+                    },
+                    "grams": {
+                        "type": "string",
+                        "pattern": "^\\d+(\\.\\d+)?$",
+                        "description": "Numeric string (e.g. \"50\").",
+                        "example": "50"
+                    }
+                }
+            },
+            "JourneyInitiateRequest": {
+                "type": "object",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "API_HOSTED",
+                            "API_HEADLESS"
+                        ]
+                    },
+                    "productCode": {
+                        "type": "string",
+                        "enum": [
+                            "ONLINE_PERSONAL",
+                            "ONLINE_GOLD",
+                            "PERSONAL_LOAN",
+                            "GOLD_LOAN"
+                        ],
+                        "description": "Catalog code (ONLINE_*) or legacy alias."
+                    },
+                    "mobile": {
+                        "type": "string",
+                        "pattern": "^[6-9]\\d{9}$",
+                        "example": "9876543210"
+                    },
+                    "customer": {
+                        "$ref": "#/components/schemas/UserDetails"
+                    },
+                    "goldLoanDetails": {
+                        "$ref": "#/components/schemas/GoldLoanDetails"
+                    }
+                },
+                "required": [
+                    "channel",
+                    "productCode",
+                    "mobile",
+                    "customer"
+                ]
+            },
+            "JourneyInitiateResponse": {
+                "type": "object",
+                "description": "API_HOSTED returns a `hostedUrl` (single-use resume link to hand to the customer). API_HEADLESS returns a `journeySession` token. Authorize subsequent /action and /{journeyId} calls by passing it in the `journey_session` cookie OR the `X-Journey-Session` header — NOT in Authorization, which carries your API key.",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "journeyId": {
+                                "type": "string"
+                            },
+                            "nextAction": {
+                                "$ref": "#/components/schemas/NextAction"
+                            },
+                            "hostedUrl": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "API_HOSTED only."
+                            },
+                            "journeySession": {
+                                "type": "string",
+                                "description": "API_HEADLESS only — pass back via the journey_session cookie or X-Journey-Session header on /action and /{journeyId}."
+                            }
+                        },
+                        "required": [
+                            "journeyId",
+                            "nextAction"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "SelectOfferPayload": {
+                "type": "object",
+                "description": "Payload for kind=SELECT_OFFER.",
+                "properties": {
+                    "offerId": {
+                        "type": "string",
+                        "description": "An offerId from data.offers[] (GET /{journeyId})."
+                    },
+                    "loanAmount": {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "description": "Requested principal (> 0)."
+                    }
+                },
+                "required": [
+                    "offerId",
+                    "loanAmount"
+                ]
+            },
+            "SelectGoldLoanBranchPayload": {
+                "type": "object",
+                "description": "Payload for kind=SELECT_GOLD_LOAN_BRANCH.",
+                "properties": {
+                    "offerId": {
+                        "type": "string",
+                        "description": "An offerId from data.offers[] (GET /{journeyId})."
+                    },
+                    "branchLocationId": {
+                        "type": "string",
+                        "description": "The chosen branch. This is the `id` of an entry in data.offers[].branchLocations[] returned by GET /{journeyId} while the journey sits at SELECT_GOLD_LOAN_BRANCH."
+                    }
+                },
+                "required": [
+                    "offerId",
+                    "branchLocationId"
+                ]
+            },
+            "SubmitBankAccountPayload": {
+                "type": "object",
+                "description": "Payload for kind=SUBMIT_BANK_ACCOUNT (the FSM step is SUBMIT_BANK_DETAILS).",
+                "properties": {
+                    "accHolderName": {
+                        "type": "string"
+                    },
+                    "acctype": {
+                        "type": "string",
+                        "enum": [
+                            "SAVING",
+                            "CURRENT"
+                        ]
+                    },
+                    "accNo": {
+                        "type": "string",
+                        "minLength": 6
+                    },
+                    "ifscCode": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
+                    }
+                },
+                "required": [
+                    "accHolderName",
+                    "acctype",
+                    "accNo",
+                    "ifscCode"
+                ]
+            },
+            "JourneyActionRequest": {
+                "type": "object",
+                "description": "The payload shape depends on `kind`:\n- SELECT_OFFER → { offerId, loanAmount }\n- SELECT_GOLD_LOAN_BRANCH → { offerId, branchLocationId } where branchLocationId is an `id` from data.offers[].branchLocations[] (see GET /{journeyId})\n- SUBMIT_BANK_ACCOUNT → { accHolderName, acctype, accNo, ifscCode }",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "SELECT_OFFER",
+                            "SELECT_GOLD_LOAN_BRANCH",
+                            "SUBMIT_BANK_ACCOUNT"
+                        ]
+                    },
+                    "payload": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SelectOfferPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SelectGoldLoanBranchPayload"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SubmitBankAccountPayload"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "kind",
+                    "payload"
+                ]
+            },
+            "JourneyActionResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "nextAction": {
+                                "$ref": "#/components/schemas/NextAction"
+                            }
+                        },
+                        "required": [
+                            "nextAction"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "JourneyRedirectReturnedRequest": {
+                "type": "object",
+                "description": "Signal that the customer has returned from a hosted redirect step.",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "KYC",
+                            "MANDATE",
+                            "ESIGN"
+                        ],
+                        "description": "The redirect step that was completed."
+                    }
+                },
+                "required": [
+                    "kind"
+                ]
+            },
+            "JourneyRedirectReturnedResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "nextAction": {
+                                "$ref": "#/components/schemas/NextAction"
+                            }
+                        },
+                        "required": [
+                            "nextAction"
+                        ]
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            },
+            "BranchLocation": {
+                "type": "object",
+                "description": "A gold-loan branch the customer can collateralise at. Echo the `id` back as the `branchLocationId` in a SELECT_GOLD_LOAN_BRANCH action.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Send this back as `branchLocationId` on SELECT_GOLD_LOAN_BRANCH."
+                    },
+                    "branchName": {
+                        "type": "string",
+                        "example": "Ahmedabad - Panchvati"
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "Full postal address (city/state are embedded here)."
+                    },
+                    "latitude": {
+                        "type": "number"
+                    },
+                    "longitude": {
+                        "type": "number"
+                    },
+                    "isSelected": {
+                        "type": "boolean",
+                        "description": "Whether this branch is already the selected one."
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "JourneyOffer": {
+                "type": "object",
+                "description": "A lender offer mirrored from the journey. Fields beyond those listed may be present (passed through from the lender) — rely only on the documented ones.",
+                "properties": {
+                    "offerId": {
+                        "type": "string"
+                    },
+                    "sellerName": {
+                        "type": "string",
+                        "description": "Lender / seller display name."
+                    },
+                    "principalAmount": {
+                        "type": "number"
+                    },
+                    "emiAmount": {
+                        "type": "number"
+                    },
+                    "tenure": {
+                        "type": "number",
+                        "description": "Tenure in months."
+                    },
+                    "interestRate": {
+                        "type": "number"
+                    },
+                    "apr": {
+                        "type": "number"
+                    },
+                    "processingFees": {
+                        "type": "number"
+                    },
+                    "netDisbursedAmount": {
+                        "type": "number"
+                    },
+                    "minimumLoanAmount": {
+                        "type": "number"
+                    },
+                    "kfsLink": {
+                        "type": "string",
+                        "description": "Key Fact Statement link."
+                    },
+                    "branchLocations": {
+                        "type": "array",
+                        "description": "Present on gold-loan offers at the SELECT_GOLD_LOAN_BRANCH step. Pick one and send its `id`.",
+                        "items": {
+                            "$ref": "#/components/schemas/BranchLocation"
+                        }
+                    }
+                },
+                "required": [
+                    "offerId"
+                ]
+            },
+            "JourneyView": {
+                "type": "object",
+                "description": "Mirrored journey state. Read-only off our DB; never exposes raw customer PII.",
+                "properties": {
+                    "journeyId": {
+                        "type": "string"
+                    },
+                    "productCode": {
+                        "type": "string"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "example": "API_HEADLESS"
+                    },
+                    "currentNextAction": {
+                        "$ref": "#/components/schemas/NextAction"
+                    },
+                    "offers": {
+                        "type": "array",
+                        "description": "Lender offers. On a gold journey at SELECT_GOLD_LOAN_BRANCH, each offer carries branchLocations[].",
+                        "items": {
+                            "$ref": "#/components/schemas/JourneyOffer"
+                        }
+                    },
+                    "selectedOffer": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "description": "The offer the customer selected, if any."
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "description": "Terminal outcome (e.g. COMPLETED, REJECTED), if reached."
+                    },
+                    "pollIntervalSeconds": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Suggested poll cadence for the current POLL step."
+                    }
+                },
+                "required": [
+                    "journeyId",
+                    "productCode",
+                    "channel",
+                    "currentNextAction",
+                    "offers"
+                ]
+            },
+            "JourneyStateResponse": {
+                "type": "object",
+                "description": "Mirrored journey view (offers, selectedOffer, nextAction, outcome). Read-only off our DB.",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/JourneyView"
+                    }
+                },
+                "required": [
+                    "success",
+                    "data"
+                ]
+            }
+        }
+    },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "paths": {
+        "/api/v1/partner/products": {
+            "get": {
+                "summary": "List Products",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "products:read"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/leads": {
+            "get": {
+                "summary": "List Applications",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "leads:read"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LeadListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/leads/{applicationId}/status": {
+            "get": {
+                "summary": "Get Application Status",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "leads:status:read"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "applicationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LeadStatusResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Application not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+
+        "/api/v1/partner/journey/initiate": {
+            "post": {
+                "summary": "Initiate Loan Journey",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "leads:create"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JourneyInitiateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing/invalid channel, productCode, mobile or customer.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JourneyInitiateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/journey/{journeyId}/action": {
+            "post": {
+                "summary": "Submit Customer Action",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "offers:select"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "journeyId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JourneyActionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid action kind.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Journey state conflict (version mismatch).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JourneyActionRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/journey/{journeyId}/redirect-returned": {
+            "post": {
+                "summary": "Signal Redirect Returned",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "offers:select"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "journeyId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JourneyRedirectReturnedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid kind (must be KYC, MANDATE, or ESIGN).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Journey is not at the expected REDIRECT_TO_<kind> step.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JourneyRedirectReturnedRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/journey/{journeyId}": {
+            "get": {
+                "summary": "Get Journey State",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "leads:status:read"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "journeyId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JourneyStateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/webhooks": {
+            "get": {
+                "summary": "List Webhook Subscriptions",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "webhooks:manage"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Register Webhook",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "webhooks:manage"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookCreateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid url (non-https / private host) or event types, or per-partner limit reached.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WebhookCreateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/webhooks/{subscriptionId}/rotate-secret": {
+            "post": {
+                "summary": "Rotate Webhook Secret",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "webhooks:manage"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "subscriptionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookSecretResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/partner/webhooks/{subscriptionId}": {
+            "delete": {
+                "summary": "Delete Webhook",
+                "security": [
+                    {
+                        "bearerAuth": [
+                            "webhooks:manage"
+                        ]
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Nonce",
+                        "in": "header",
+                        "required": true,
+                        "description": "Unique per-request nonce. Replays are rejected.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "subscriptionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated but missing the required scope / product access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

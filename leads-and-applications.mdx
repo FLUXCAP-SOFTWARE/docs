@@ -1,0 +1,118 @@
+---
+title: "Lead Tracking & Applications"
+description: "Track all submitted loan applications through their lifecycle — from NEW to SANCTIONED or REJECTED."
+sidebarTitle: "Leads & Applications"
+---
+
+## Overview
+
+The **Leads** index shows a filtered, searchable table of all applications submitted through your account. Statuses are projected into **coarse categories** to make reporting across different lender channels consistent and clean.
+
+---
+
+## Lead Status Reference
+
+<AccordionGroup>
+  <Accordion title="NEW — Lead captured" icon="circle-dot">
+    The lead has been recorded in the EASYCRED database. The system is evaluating lender routing rules.
+
+    **Required action:** None — wait for routing assignment.
+  </Accordion>
+
+  <Accordion title="INITIATED — Transmitted to lender" icon="send">
+    The lead has been transmitted to the lender's credit check system.
+
+    **Required action:** Awaiting lender validation results.
+  </Accordion>
+
+  <Accordion title="OFFERS_RECEIVED — Credit offers available" icon="hand-coins">
+    One or more lenders have returned credit offers for the customer.
+
+    **Required action:** Review the offers with the customer and select one. See [Lender Offers & Actions](/lender-offers).
+  </Accordion>
+
+  <Accordion title="OFFER_SELECTED — Lender offer confirmed" icon="check-circle">
+    The customer's chosen lender offer has been confirmed.
+
+    **Required action:** Direct the customer to complete KYC verification.
+  </Accordion>
+
+  <Accordion title="KYC_DONE — KYC verified" icon="user-check">
+    The customer's identity has been successfully verified by the lender's KYC system.
+
+    **Required action:** Customer must complete eNACH mandate authorization.
+  </Accordion>
+
+  <Accordion title="ENACH_DONE — Auto-debit authorized" icon="shield-check">
+    The customer has authorized the auto-debit mandate (eNACH) for EMI repayments.
+
+    **Required action:** Customer must eSign the loan agreement.
+  </Accordion>
+
+  <Accordion title="ESIGN_DONE — Agreement signed" icon="pen-line">
+    The loan agreement has been fully signed by the customer.
+
+    **Required action:** Awaiting final disbursal approval from the lender bank.
+  </Accordion>
+
+  <Accordion title="SANCTIONED — Loan disbursed ✓" icon="circle-check">
+    The loan has been approved and the funds have been disbursed to the customer's bank account.
+
+    **Result:** A commission entry is automatically generated for this lead.
+  </Accordion>
+
+  <Accordion title="REJECTED — Declined by lender" icon="x-circle">
+    The lender's credit policy has declined the application.
+
+    **Required action:** Review the applicant's profile and eligibility criteria. Consider re-applying after addressing the issues.
+  </Accordion>
+
+  <Accordion title="ABANDONED — No activity for 7+ days" icon="clock">
+    The customer did not act on the journey link or verification steps for 7 or more days.
+
+    **Required action:** Re-engage the customer to restart or reapply.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Status Flow Diagram
+
+```text
+NEW
+ └── INITIATED
+      └── OFFERS_RECEIVED
+           └── OFFER_SELECTED
+                └── KYC_DONE
+                     └── ENACH_DONE
+                          └── ESIGN_DONE
+                               └── SANCTIONED ✓
+                    (any point)
+                    └── REJECTED ✗
+                    └── ABANDONED ✗
+```
+
+---
+
+## Filtering & Searching Leads
+
+The Leads table supports filtering by:
+
+| Filter | Description |
+| --- | --- |
+| **Status** | Filter by any coarse status |
+| **Date Range** | Submission date window |
+| **Loan Type** | Personal, Gold, Business, etc. |
+| **Search** | Customer name, mobile, or application ID |
+
+---
+
+## Application Details View
+
+Clicking **View** on any lead opens the full application detail screen showing:
+
+- Customer profile summary (no raw PII — partially masked)
+- Complete status timeline with timestamps
+- Lender offers (if any)
+- Disbursal details (if `SANCTIONED`) — including disbursed amount, date, and **UTR reference code**
+- Commission entry linked to this application

@@ -1,0 +1,74 @@
+---
+title: "Dashboard & Key Metrics"
+description: "Upon login, the EASYCRED Partner Portal dashboard gives you a real-time snapshot of your business performance."
+sidebarTitle: "Dashboard"
+---
+
+## Overview
+
+Upon login, partners are greeted with a **metrics dashboard** providing a real-time snapshot of your portfolio performance and commissions.
+
+---
+
+## Key Metric Cards
+
+<CardGroup cols={2}>
+  <Card title="Total Leads" icon="users">
+    Cumulative count of all loan applications submitted through your partner account since activation.
+  </Card>
+
+  <Card title="Active Leads" icon="loader">
+    Applications currently in progress — undergoing lender routing, credit checks, KYC, or verification workflows.
+  </Card>
+
+  <Card title="Sanctioned Leads" color="#16a34a" icon="circle-check">
+    Approved applications that have received bank payouts. Each sanctioned lead generates a commission entry.
+  </Card>
+
+  <Card title="Commissions Earned" color="#4f46e5" icon="indian-rupee">
+    Total payables across all statuses — Pending, Approved, and Paid combined.
+  </Card>
+</CardGroup>
+
+---
+
+## Understanding Your Pipeline
+
+The dashboard gives you a funnel view of your lead activity:
+
+```text
+Total Leads
+    └── Active Leads      ← still in process
+    └── Sanctioned Leads  ← disbursed successfully
+    └── Rejected / Abandoned ← did not convert
+```
+
+Use this to identify:
+
+- **Conversion rate** — what % of total leads reach `SANCTIONED`
+- **Drop-off points** — where leads are stalling (e.g., stuck at `OFFERS_RECEIVED`)
+- **Commission pipeline** — how much is pending vs. approved vs. paid
+
+---
+
+## Navigation
+
+From the dashboard, you can quickly jump to:
+
+<CardGroup cols={2}>
+  <Card title="Submit a New Lead" icon="plus" href="/lead-capture">
+    Capture a new customer loan application.
+  </Card>
+
+  <Card title="View All Leads" icon="list" href="/leads-and-applications">
+    Filter and track all submitted applications.
+  </Card>
+
+  <Card title="Lender Offers" icon="handshake" href="/lender-offers">
+    Review and select offers for leads in `OFFERS_RECEIVED` status.
+  </Card>
+
+  <Card title="Commissions" icon="wallet" href="/pricing">
+    Track your pending and paid commission payouts.
+  </Card>
+</CardGroup>

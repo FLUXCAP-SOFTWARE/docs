@@ -1,0 +1,79 @@
+---
+title: "API Reference"
+description: "Interactive EasyCred Partner API reference — all endpoints, schemas, and authentication details."
+sidebarTitle: "Introduction"
+---
+
+## Overview
+
+The EasyCred Partner API is a REST API that returns JSON. All endpoints are under:
+
+```text
+https://api.easycred.co.in/api/v1/partner/
+```
+
+## Interactive Spec
+
+The full OpenAPI specification is available without authentication:
+
+```http
+GET https://api.easycred.co.in/api/v1/openapi.json
+```
+
+<CardGroup cols={2}>
+  <Card title="Import into Postman" icon="box" href="https://api.easycred.co.in/api/v1/openapi.json">
+    Use **Import → Link** in Postman and paste the URL above to get a full interactive collection.
+  </Card>
+
+  <Card title="Swagger UI" icon="code-xml" href="https://api.easycred.co.in/api/v1/openapi.json">
+    Import the URL into any Swagger UI instance for an interactive explorer with all schemas.
+  </Card>
+</CardGroup>
+
+## Authentication
+
+All Partner API endpoints require HMAC-SHA256 signed requests. See the [Authentication guide](/authentication) for the full signing process.
+
+At minimum, every request must include:
+
+```http
+x-api-key: ec_live_...
+x-timestamp: 1749820800
+x-nonce: <uuid-v4>
+x-signature: <hmac-sha256-hex>
+```
+
+## Step Names Reference (`nextAction.type`)
+
+<Warning>
+  Always branch on **`category`**, not on the exact step name — step names may grow over time. These are listed here for recognition only.
+</Warning>
+
+| Category | Step Names |
+| --- | --- |
+| `POLL` | `POLL_FOR_OFFERS`, `POLL_FOR_KYC_LINK`, `POLL_KYC_STATUS`, `POLL_FOR_ESIGN_LINK`, `POLL_FOR_MANDATE_LINK`, `POLL_FOR_DISBURSAL`, `POLL_FOR_UPDATED_GOLD_LOAN_OFFER` |
+| `COLLECT` | `SELECT_OFFER`, `SELECT_GOLD_LOAN_BRANCH`, `SUBMIT_BANK_DETAILS` |
+| `REDIRECT` | `REDIRECT_TO_KYC`, `REDIRECT_TO_ESIGN`, `REDIRECT_TO_MANDATE` |
+| `TERMINAL` | `COMPLETED`, `REJECTED`, `NO_OFFERS_AVAILABLE`, `OFFLINE_PROCESSING`, `ABANDONED`, `EXPIRED` |
+
+## Glossary
+
+| Term | Meaning |
+| --- | --- |
+| `journeyId` | Stable ID for one loan journey (`jrn_<uuid>`) |
+| `journeySession` | Per-journey token from initiate; sent via `X-Journey-Session` on headless calls |
+| `nextAction` | The single next step the journey is waiting on, with its `category` |
+| `category` | The kind of next step: `POLL` / `COLLECT` / `REDIRECT` / `TERMINAL` — what your code branches on |
+| `outcome` | The final result, present only at a `TERMINAL` step |
+
+## Support
+
+Contact your EasyCred onboarding manager for:
+
+- Credentials and key rotation
+- Sandbox access
+- Integration help and troubleshooting
+
+<Info>
+  Email: [support@easycred.co.in](mailto:support@easycred.co.in)
+</Info>

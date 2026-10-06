@@ -1,0 +1,80 @@
+---
+title: "Lead Capture & Submission"
+description: "Manually submit new customer loan applications through the EASYCRED Partner Portal."
+sidebarTitle: "Lead Capture"
+---
+
+## Overview
+
+Partners can manually submit new loan leads directly from the portal. The platform automatically routes each lead to the appropriate lender channel based on the loan type selected.
+
+---
+
+## Lead Submission Form
+
+### Personal Details
+
+| Field | Notes |
+| --- | --- |
+| First & Last Name | Customer's full legal name |
+| Date of Birth | Used for eligibility and KYC |
+| Mobile Number | 10-digit number — used for OTP and lender communications |
+| Email Address | Used for journey notifications |
+| PAN | Auto-formatted to uppercase (e.g., `ABCDE1234F`) |
+
+### Employment Information
+
+| Field | Options / Notes |
+| --- | --- |
+| Employment Type | **Salaried** or **Self-Employed** |
+| Monthly Net Income | After-tax take-home salary |
+| Company Name | Employer name (for salaried applicants) |
+
+### Loan Criteria
+
+| Field | Options |
+| --- | --- |
+| Requested Loan Amount | Desired disbursement amount in ₹ |
+| Loan Type | Personal, Business, Gold, LAP, Home, Car, Education, Working Capital |
+
+---
+
+## Automatic Lender Routing
+
+The platform automatically selects the lender channel based on loan type — you don't need to configure this:
+
+<AccordionGroup>
+  <Accordion title="Personal, Business & Gold Loans" icon="building-2">
+    Routes to **EASYCRED adapters**. The journey is initiated programmatically and the lead moves through the standard headless flow (`INITIATED` → `OFFERS_RECEIVED` → …).
+  </Accordion>
+
+  <Accordion title="Home, Car & Education Loans" icon="house">
+    Assigned to **offline operations**. An EASYCRED operations team member contacts the customer to complete the application.
+  </Accordion>
+
+  <Accordion title="Working Capital Loans" icon="briefcase">
+    Assigned to **offline operations** and handled by the EASYCRED B2B lending desk.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## After Submission
+
+Once submitted, the lead appears in your **Leads** table with the status `NEW`. The platform then:
+
+<Steps>
+  <Step title="Assigns Routing Rules">
+    The system evaluates the loan type and customer profile to select the appropriate lender channel.
+  </Step>
+  <Step title="Transmits to Lender">
+    The lead is sent to the lender's credit check system. Status moves to `INITIATED`.
+  </Step>
+  <Step title="Returns Offers">
+    For online journeys, lender credit offers are returned (`OFFERS_RECEIVED`).
+  </Step>
+</Steps>
+
+<Tip>
+  Ensure the customer's PAN and mobile number are accurate before submitting — incorrect details are the most common cause of lender rejections.
+</Tip>

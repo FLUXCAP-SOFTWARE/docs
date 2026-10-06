@@ -1,0 +1,89 @@
+---
+title: "Security Gates"
+description: "EASYCRED's gateway enforces timestamp drift and nonce replay protection on every signed request."
+sidebarTitle: "Security Gates"
+---
+
+## Overview
+
+In addition to HMAC signature verification, the EASYCRED API gateway enforces two additional security gates to prevent replay attacks and request tampering: **Timestamp Drift** and **Nonce Replay** protection.
+
+---
+
+## Timestamp Drift Gate
+
+The gateway compares the `x-timestamp` header value against the server's current UTC time. If the difference exceeds **±300 seconds (5 minutes)**, the request is rejected:
+
+```text
+| T_server - T_request | > 300 seconds  →  401 Unauthorized
+```
+
+**Why this matters:** Even if an attacker intercepts a valid signed request, they cannot re-send it more than 5 minutes later — the signature will be rejected as stale.
+
+<CardGroup cols={2}>
+  <Card title="Valid Window" color="#16a34a" icon="clock">
+    Requests with `x-timestamp` within **±300 seconds** of server time are accepted.
+  </Card>
+
+  <Card title="Outside Window → 401" color="#ef4444" icon="shield-x">
+    Requests older than 5 minutes or with future timestamps beyond 5 minutes are rejected.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Keep your server clock synchronized using **NTP** (Network Time Protocol). Clock drift is the most common cause of unexpected `401` errors in production.
+</Warning>
+
+---
+
+## Nonce Replay Gate
+
+Every request must include a unique `x-nonce` value. The gateway stores all nonces seen within the drift window in a **distributed Redis cache**.
+
+If a request arrives with a nonce that has already been used within the window, it is immediately rejected:
+
+```text
+Duplicate nonce within drift window  →  401 Replayed request rejected
+```
+
+**Why this matters:** Even within the 5-minute timestamp window, an attacker cannot replay an intercepted request because the nonce is already "used up".
+
+### Nonce Requirements
+
+| Requirement | Details |
+| --- | --- |
+| Format | Printable ASCII characters |
+| Length | 1–200 characters |
+| Uniqueness | Must be unique per request |
+| Recommended | UUID v4 (e.g., `94fc6cee-137c-4206-bb0a-48623bd0847c`) |
+
+---
+
+## Combined Protection Model
+
+Both gates work together to provide layered security:
+
+```text
+Incoming Request
+      │
+      ├── ✓ Valid HMAC Signature?
+      │         └── No → 401 Bad Signature
+      │
+      ├── ✓ Timestamp within ±300s?
+      │         └── No → 401 Stale Timestamp
+      │
+      ├── ✓ Nonce not seen before?
+      │         └── No → 401 Replayed Request
+      │
+      └── ✓ All gates passed → Request processed
+```
+
+---
+
+## Troubleshooting
+
+| Error | Likely Cause | Fix |
+| --- | --- | --- |
+| `401 Stale timestamp` | Server clock drift | Sync clock with NTP |
+| `401 Replayed request` | Nonce reused across retries | Generate a fresh UUID per request attempt |
+| `401 Bad signature` | Signing string built incorrectly | Verify canonical string construction, especially the empty body `""` for GET requests |

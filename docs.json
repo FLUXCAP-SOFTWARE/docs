@@ -1,0 +1,125 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "EASYCRED",
+  "colors": {
+    "primary": "#191ca9",
+    "light": "#e3e3e3",
+    "dark": "#000136"
+  },
+  "favicon": {
+    "light": "/images/favicon.ico",
+    "dark": "/images/favicon.ico"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index"
+            ]
+          },
+          {
+            "group": "API Integration",
+            "pages": [
+              "api-introduction",
+              "methods-of-api-usage",
+              "credentials",
+              "access-scope",
+              "products",
+              "authentication",
+              "security-gates",
+              "credential-rotation",
+              "integration-steps",
+              "tracking-steps",
+              "webhooks",
+              "error-and-rate-limits"
+            ],
+            "icon": "code-xml"
+          },
+          {
+            "group": "Partner Portal",
+            "pages": [
+              "introduction-partner-portal",
+              "onboarding",
+              "dashboard",
+              "lead-capture",
+              "leads-and-applications",
+              "lender-offers",
+              "product-access",
+              "commissions",
+              "pricing"
+            ],
+            "icon": "laptop-minimal"
+          }
+        ],
+        "icon": "book-open"
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API documentation",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Endpoint examples",
+            "openapi": "api-reference/openapi.json"
+          }
+        ],
+        "icon": "code-xml"
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/logo.svg",
+    "dark": "/logo/logo.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@easycred.co.in"
+      }
+    ]
+  },
+  "contextual": {
+    "options": [
+     "copy",
+    "view"
+  ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/easycredindia",
+      "linkedin": "https://www.linkedin.com/company/easycred-india",
+      "instagram": "https://www.instagram.com/easycred.india",
+      "website": "https://www.easycred.co.in/",
+      "facebook": "https://www.facebook.com/easycred.india"
+    }
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "description": "Documentation of EASYCRED",
+  "appearance": {
+    "strict": false
+  },
+  "fonts": {
+    "family": "Poppins"
+  },
+  "thumbnails": {
+    "fonts": {
+      "family": "Poppins"
+    }
+  },
+  "api": {
+    "url": "full",
+    "openapi": "api-reference/openapi.json"
+  }
+}

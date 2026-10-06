@@ -1,0 +1,130 @@
+---
+title: "Authentication"
+description: "Every request to the EasyCred Partner API is authenticated with your API key and an HMAC-SHA256 signature."
+sidebarTitle: "Authentication"
+---
+
+## Overview
+
+Every request to `/api/v1/partner/*` is authenticated with your **API key** and an **HMAC-SHA256 signature**. This proves the request came from you, was not tampered with, and cannot be replayed.
+
+## Required Headers
+
+Every request must include all four of these headers:
+
+| Header | Value |
+| --- | --- |
+| `x-api-key` | Your full `ec_live_…` / `ec_test_…` API key |
+| `x-timestamp` | Current Unix time in whole seconds, as a string (e.g. `"1749820800"`) |
+| `x-nonce` | A unique value per request — a UUID v4 works well |
+| `x-signature` | Hex HMAC-SHA256 over the canonical signing string (see below) |
+
+<Info>
+  **Headless sessions:** On calls made after you start a journey (poll, action, redirect-returned), also send the per-journey `journeySession` in the `X-Journey-Session` header (or the `journey_session` cookie). Never put it in `Authorization`, which is reserved for the API key.
+</Info>
+
+---
+
+## The Canonical Signing String
+
+Build this exact **length-prefixed string**, then HMAC-SHA256 it with your `signingSecret` and hex-encode the result:
+
+```text
+v1:<len(METHOD)>:<METHOD>:<len(PATH)>:<PATH>:<len(TIMESTAMP)>:<TIMESTAMP>:<len(NONCE)>:<NONCE>:<BODY>
+```
+
+### Field Definitions
+
+| Field | Description |
+| --- | --- |
+| `METHOD` | The HTTP verb in uppercase — `POST`, `GET` |
+| `PATH` | The request path **without** the query string (e.g. `/api/v1/partner/journey/jrn_abc/action`) |
+| `TIMESTAMP` | The exact value you put in `x-timestamp` |
+| `NONCE` | The exact value you put in `x-nonce` |
+| `BODY` | The exact raw request body. For GET requests (no body), use an empty string — **don't omit the field** |
+
+### Example Signing String
+
+For a POST to `/api/v1/partner/journey/initiate`:
+
+```text
+v1:4:POST:34:/api/v1/partner/journey/initiate:10:1749820800:36:550e8400-e29b-41d4-a716-446655440000:{"channel":"API_HEADLESS",...}
+```
+
+---
+
+## Nonce & Timestamp Rules
+
+<CardGroup cols={2}>
+  <Card title="Nonce Rules" color="#4f46e5">
+    - Printable ASCII, **1–200 characters**
+    - **Single-use** — a replayed nonce is rejected with `401`
+    - A UUID v4 is recommended
+  </Card>
+
+  <Card title="Timestamp Rules" color="#0ea5e9">
+    - Whole seconds (Unix epoch)
+    - Tolerance: **±300 seconds** from server time
+    - Requests outside the window are rejected with `401`
+  </Card>
+</CardGroup>
+
+---
+
+## Node.js Signing Helper
+
+Drop-in helper that produces the signed headers. The `x-signature` it returns is what the curl examples in this guide show as `<computed-hex>`.
+
+```javascript
+import { createHmac, randomUUID } from 'crypto';
+
+function signRequest(
+  method,   // 'POST' | 'GET'
+  path,     // exclude the query string
+  body,     // JSON string, or '' for GET
+  apiKey,
+  secret,
+) {
+  const ts    = String(Math.floor(Date.now() / 1000));
+  const nonce = randomUUID();
+  const str   =
+    `v1:${method.length}:${method}:${path.length}:${path}:${ts.length}:${ts}:${nonce.length}:${nonce}:${body}`;
+  const sig   = createHmac('sha256', secret).update(str).digest('hex');
+  return {
+    'Content-Type': 'application/json',
+    'x-api-key':    apiKey,
+    'x-timestamp':  ts,
+    'x-nonce':      nonce,
+    'x-signature':  sig,
+  };
+}
+```
+
+### Usage Example
+
+```javascript
+const headers = signRequest(
+  'POST',
+  '/api/v1/partner/journey/initiate',
+  JSON.stringify(requestBody),
+  process.env.EASYCRED_API_KEY,
+  process.env.EASYCRED_SIGNING_SECRET,
+);
+
+const response = await fetch('https://api.easycred.co.in/api/v1/partner/journey/initiate', {
+  method: 'POST',
+  headers,
+  body: JSON.stringify(requestBody),
+});
+```
+
+---
+
+## Common Authentication Errors
+
+| Error | Cause | Fix |
+| --- | --- | --- |
+| `401` — bad signature | Wrong `signingSecret` or malformed canonical string | Verify the signing string construction |
+| `401` — stale timestamp | `x-timestamp` is more than 300s from server time | Sync your server clock (use NTP) |
+| `401` — replayed nonce | Same nonce used twice | Generate a fresh UUID per request |
+| `401` — missing journey session | Headless call without `X-Journey-Session` | Add the `journeySession` from the initiate response |

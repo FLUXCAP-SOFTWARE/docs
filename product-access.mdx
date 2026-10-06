@@ -1,0 +1,106 @@
+---
+title: "Product Access"
+description: "Understand which loan products are available through the EASYCRED partner platform and how access is managed."
+sidebarTitle: "Product Access"
+---
+
+## Overview
+
+Your partner account is granted access to a specific list of loan products during onboarding. Only products in your **productAccess** list can be submitted as leads or initiated via the API.
+
+---
+
+## Available Loan Products
+
+<CardGroup cols={2}>
+  <Card title="Personal Loan" color="#4f46e5" icon="user">
+    **Code:** `ONLINE_PERSONAL`
+
+    Digital journey via EASYCRED adapters. Fully headless — offers, KYC, eNACH, eSign all via API.
+  </Card>
+
+  <Card title="Gold Loan" color="#f59e0b" icon="gem">
+    **Code:** `ONLINE_GOLD`
+
+    Digital journey with branch selection for physical gold evaluation. Requires `goldLoanDetails` in the API request.
+  </Card>
+
+  <Card title="Business Loan" icon="briefcase">
+    Routes to EASYCRED adapters. Available for salaried and self-employed applicants.
+  </Card>
+
+  <Card title="Home Loan" icon="house">
+    Offline operations — assigned to EASYCRED's home loan lending desk.
+  </Card>
+
+  <Card title="Car Loan" icon="car">
+    Offline operations — assigned to EASYCRED's vehicle lending desk.
+  </Card>
+
+  <Card title="Education Loan" icon="graduation-cap">
+    Offline operations — assigned to EASYCRED's education lending desk.
+  </Card>
+
+  <Card title="Working Capital" icon="building">
+    Offline B2B operations — assigned to EASYCRED's business lending desk.
+  </Card>
+</CardGroup>
+
+---
+
+## Checking Your Access
+
+You can view which products are enabled for your API key:
+
+```http
+GET /api/v1/partner/products
+```
+
+**Required scope:** `products:read`
+
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "code": "ONLINE_PERSONAL",
+        "displayName": "Personal Loan",
+        "category": "ONLINE",
+        "channel": "API"
+      },
+      {
+        "code": "ONLINE_GOLD",
+        "displayName": "Gold Loan",
+        "category": "ONLINE",
+        "channel": "API"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Access Restrictions
+
+| Scenario | HTTP Response | Action Required |
+| --- | --- | --- |
+| Product not in your `productAccess` list | `403 Forbidden` | Contact EASYCRED to expand your product access |
+| Correct product but missing API scope | `403 Forbidden` | Contact EASYCRED to update your API key scopes |
+
+<Info>
+  Product access is configured at the partner account level by EASYCRED administrators. Contact your relationship manager to request access to additional products.
+</Info>
+
+---
+
+## Loan Routing Summary
+
+| Loan Type | Route | Integration Mode |
+| --- | --- | --- |
+| Personal Loan | EASYCRED | API Journey (Headless / Hosted) |
+| Gold Loan | EASYCRED | API Journey (Headless / Hosted) |
+| Business Loan | EASYCRED | API Journey |
+| Home, Car, Education | Offline Operations | Manual — no API journey |
+| Working Capital | Offline B2B | Manual — no API journey |

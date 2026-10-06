@@ -1,0 +1,65 @@
+---
+title: "Introduction"
+description: "The EasyCred Partner API lets your backend originate consumer loan applications on EasyCred's platform."
+sidebarTitle: "Getting Started"
+---
+
+## Overview
+
+The EasyCred Partner API lets your backend originate consumer loan applications on EasyCred's platform. You can either hand the customer a ready-made EasyCred screen, or drive every step yourself from your own app.
+
+This guide walks a partner engineer through a working integration in order: **get credentials → sign requests → start a journey → drive it to a decision → track the outcome**. Each section is self-contained — you can read it top to bottom during onboarding, or jump to a specific step.
+
+<Info>
+  **Audience:** Partner backend engineers. All examples are server-to-server (REST \+ JSON). No customer PII is ever returned by this API.
+</Info>
+
+## Base URLs
+
+| Environment | Base URL |
+| --- | --- |
+| Production | `https://api.easycred.co.in` |
+| Development / UAT | `https://dev.easycred.co.in` |
+| Interactive Spec | `{baseURL}/api/v1/openapi.json` (no auth) |
+
+<Tip>
+  Import the OpenAPI spec into Postman or Swagger UI for an interactive explorer with all schemas.
+</Tip>
+
+## Two Integration Modes
+
+You choose the integration mode **per request**, at the moment you start a journey (the `channel` field). Pick the one that matches how much of the customer experience you want to own.
+
+<CardGroup cols={2}>
+  <Card title="Hosted (API_HOSTED)" color="#4f46e5" icon="globe">
+    Starting a journey returns a `hostedUrl`. You redirect or embed it — EasyCred's screens handle OTP, offers, KYC, e-sign and mandate. You just track the final status.
+
+    **Best for:** The fastest integration — you don't build any loan screens.
+  </Card>
+
+  <Card title="Headless (API_HEADLESS)" color="#0ea5e9" icon="terminal">
+    Starting a journey returns a `journeySession`. Your backend drives the flow over REST — reading state, submitting customer choices, and opening third-party links at verification steps.
+
+    **Best for:** Full control — you build and own the customer-facing UI.
+  </Card>
+</CardGroup>
+
+## Quick Start Flow
+
+<Steps>
+  <Step title="Get Your Credentials">
+    Receive your `apiKey` and `signingSecret` from EasyCred at onboarding. Store them immediately — they are shown only once.
+  </Step>
+  <Step title="Sign Your Requests">
+    Every request requires an HMAC-SHA256 signature computed from your `signingSecret`. See [Authentication](/authentication).
+  </Step>
+  <Step title="Start a Loan Journey">
+    Call `POST {baseurl}/v1/partner/journey/initiate` with the customer's details and your chosen mode.
+  </Step>
+  <Step title="Drive to a Decision">
+    For headless: poll journey state and respond to each `nextAction`. For hosted: hand off the `hostedUrl` and track status.
+  </Step>
+  <Step title="Track the Outcome">
+    Read the terminal `outcome` or subscribe to webhooks for real-time status updates.
+  </Step>
+</Steps>

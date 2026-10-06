@@ -1,0 +1,83 @@
+---
+title: "Products"
+description: "Your API key is granted access to a specific list of loan products via productAccess."
+sidebarTitle: "Products"
+---
+
+## Overview
+
+Your API key is granted access to a specific list of loan products via `productAccess`. Attempting to initiate a product that is **not** in your list returns `403 Forbidden`.
+
+## Journey Products
+
+The EasyCred journey flow supports the following products:
+
+<CardGroup cols={2}>
+  <Card title="Personal Loan" color="#4f46e5">
+    **Product Code:** `ONLINE_PERSONAL`
+
+    **Legacy alias:** `PERSONAL_LOAN` (also accepted)
+
+    A fully digital personal loan journey — from eligibility check through to disbursal.
+  </Card>
+
+  <Card title="Gold Loan" color="#f59e0b">
+    **Product Code:** `ONLINE_GOLD`
+
+    **Legacy alias:** `GOLD_LOAN` (also accepted)
+
+    A gold-secured loan journey that includes branch selection and physical gold evaluation.
+  </Card>
+</CardGroup>
+
+## Checking Your Enabled Products
+
+Use the products endpoint to see exactly which products are enabled for your API key:
+
+```http
+GET /api/v1/partner/products
+```
+
+**Required scope:** `products:read`
+
+**Example response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "code": "ONLINE_PERSONAL",
+        "displayName": "Personal Loan",
+        "category": "ONLINE",
+        "channel": "API"
+      },
+      {
+        "code": "ONLINE_GOLD",
+        "displayName": "Gold Loan",
+        "category": "ONLINE",
+        "channel": "API"
+      }
+    ]
+  }
+}
+```
+
+## Product Codes
+
+| Product Code | Display Name | Legacy Alias | Notes |
+| --- | --- | --- | --- |
+| `ONLINE_PERSONAL` | Personal Loan | `PERSONAL_LOAN` | Standard journey flow |
+| `ONLINE_GOLD` | Gold Loan | `GOLD_LOAN` | Requires `goldLoanDetails` in initiate request |
+
+## Gold Loan — Additional Requirements
+
+When initiating a Gold Loan journey, you must include a `goldLoanDetails` object in the request body:
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `jewellaryList` | `string[]` | Yes | At least one item, e.g. `["Gold chain 22K"]` |
+| `grams` | `string` | Yes | Numeric string, e.g. `"35.5"` |
+
+See [Integration Steps](/integration-steps) for the full initiate request reference.

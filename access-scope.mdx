@@ -1,0 +1,79 @@
+---
+title: "Access Scope"
+description: "Your API key is granted a set of scopes that control which operations you can perform."
+sidebarTitle: "Access Scope"
+---
+
+## Overview
+
+Your API key is granted a set of **scopes** at onboarding. Each API endpoint requires a specific scope — calls made without the required scope return `403 Forbidden`.
+
+## Required Scopes for Journey Integration
+
+A standard journey integration requires the following scopes:
+
+<CardGroup cols={2}>
+  <Card title="leads:create" color="#16a34a">
+    **Required for:** Starting a journey
+
+    `POST /api/v1/partner/journey/initiate`
+  </Card>
+
+  <Card title="offers:select" color="#4f46e5">
+    **Required for:** Submitting customer actions and signalling redirect-returned
+
+    `POST /journey/{id}/action` and `/redirect-returned`
+  </Card>
+
+  <Card title="leads:status:read" color="#0ea5e9">
+    **Required for:** Reading journey and application status
+
+    `GET /journey/{id}` and `GET /leads/{id}/status`
+  </Card>
+
+  <Card title="products:read" color="#f59e0b">
+    **Required for:** Listing the products enabled for your key
+
+    `GET /api/v1/partner/products`
+  </Card>
+</CardGroup>
+
+## Optional Scopes
+
+<AccordionGroup>
+  <Accordion title="webhooks:manage" icon="webhook">
+    Allows you to create, update, and delete webhook subscriptions for real-time status notifications. Useful if you prefer push over polling.
+  </Accordion>
+
+  <Accordion title="leads:read" icon="list">
+    Allows you to list your applications with pagination. Returns metadata only — **no raw PII is ever returned**.
+
+    `GET /api/v1/partner/leads?page=1&limit=20`
+  </Accordion>
+</AccordionGroup>
+
+## Scope Reference Table
+
+| Scope | Required For | Endpoint |
+| --- | --- | --- |
+| `leads:create` | Start a journey | `POST /journey/initiate` |
+| `offers:select` | Submit actions & redirect-returned | `POST /journey/{id}/action` |
+| `leads:status:read` | Read journey/application status | `GET /journey/{id}`, `GET /leads/{id}/status` |
+| `products:read` | List enabled products | `GET /products` |
+| `webhooks:manage` | Manage webhook subscriptions | Webhook endpoints |
+| `leads:read` | List applications | `GET /leads` |
+
+## Scope Errors
+
+If your API key lacks the required scope for an endpoint, you will receive:
+
+```json
+{
+  "success": false,
+  "error": "Forbidden — missing required scope"
+}
+```
+
+<Note>
+  A `403` response can also mean: the product is not in your `productAccess` list, or your key has been suspended or revoked. Contact your EasyCred onboarding manager to review your key's permissions.
+</Note>

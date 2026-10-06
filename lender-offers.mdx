@@ -1,0 +1,89 @@
+---
+title: "Lender Offers & Actions"
+description: "Review credit offers returned by lenders and take actions to move the loan journey forward."
+sidebarTitle: "Lender Offers"
+---
+
+## Overview
+
+When a loan application reaches `OFFERS_RECEIVED` status, the lender has returned one or more credit offers for the customer. You review these offers with the customer and select the one they want to proceed with.
+
+---
+
+## Viewing Offers
+
+Click **View** on any lead in `OFFERS_RECEIVED` status to open the offer selection screen.
+
+Each offer card displays:
+
+<CardGroup cols={2}>
+  <Card title="Lender Details" icon="building-2">
+    Lender identity and their credit product name.
+  </Card>
+
+  <Card title="Principal & EMI" icon="calculator">
+    Approved loan principal amount and projected monthly EMI.
+  </Card>
+
+  <Card title="Interest & APR" icon="percent">
+    Annual interest rate and Annual Percentage Rate (APR) including all fees.
+  </Card>
+
+  <Card title="Net Disbursal" icon="indian-rupee">
+    Actual amount disbursed after deducting processing fees and insurance (if any).
+  </Card>
+</CardGroup>
+
+---
+
+## Selecting an Offer
+
+<Steps>
+  <Step title="Review Offers with the Customer">
+    Present the available lender offers to the customer. Compare EMIs, interest rates, and net disbursed amounts.
+  </Step>
+  <Step title="Click Select This Offer">
+    Once the customer has chosen, click **Select This Offer** on the preferred card. The lead status moves to `OFFER_SELECTED`.
+  </Step>
+  <Step title="KYC & Verification Begins">
+    After offer selection, the platform loads the KYC and redirection workflow. The customer will be guided through identity verification, eNACH mandate, and eSign.
+  </Step>
+</Steps>
+
+<Warning>
+  Offer selection is **final** — once a lender offer is selected, it cannot be changed. Ensure the customer is certain before clicking **Select This Offer**.
+</Warning>
+
+---
+
+## Offer Comparison Tips
+
+<AccordionGroup>
+  <Accordion title="Lower EMI vs. Lower Total Cost" icon="scale">
+    A lower EMI often means a longer tenure and higher total interest paid. Help the customer understand the trade-off between monthly affordability and total cost of the loan.
+  </Accordion>
+
+  <Accordion title="Check the APR, Not Just the Interest Rate" icon="percent">
+    The APR includes processing fees, insurance premiums, and other charges — it is the true cost of the loan. Always compare APR across offers, not just the headline interest rate.
+  </Accordion>
+
+  <Accordion title="Net Disbursal Amount" icon="indian-rupee">
+    The net disbursed amount is what the customer actually receives in their bank account. If processing fees are high, the net disbursal may be significantly less than the approved principal.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## After Sanctioning
+
+Once the loan journey completes and the status moves to `SANCTIONED`, the application detail screen shows:
+
+| Field | Description |
+| --- | --- |
+| **Disbursed Amount** | Final amount credited to the customer's account |
+| **Disbursal Date** | Date the funds were transferred |
+| **UTR Reference** | Unique Transaction Reference code from the bank transfer |
+
+<Info>
+  The UTR reference is the definitive proof of disbursal. Share this with the customer if they need to verify the credit with their bank.
+</Info>

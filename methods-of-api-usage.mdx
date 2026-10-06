@@ -1,0 +1,100 @@
+---
+title: "Methods of API Usage"
+description: "Choose between Hosted and Headless integration modes to match your customer experience requirements."
+sidebarTitle: "Methods of API Usage"
+---
+
+## Overview
+
+EasyCred offers two distinct integration modes. You select the mode **per request** when initiating a journey using the `channel` field. The rest of the journey flow depends on which mode you choose.
+
+## Comparison
+
+| Feature | Hosted (`API_HOSTED`) | Headless (`API_HEADLESS`) |
+| --- | --- | --- |
+| **Returns** | `hostedUrl` | `journeySession` |
+| **UI Ownership** | EasyCred owns the screens | You build and own the UI |
+| **Steps Handled By** | EasyCred (OTP, offers, KYC, e-sign, mandate) | Your backend via REST |
+| **Integration Effort** | Minimal | Full control |
+| **Best For** | Fastest time-to-market | Custom branded experience |
+
+---
+
+## Hosted Mode (`API_HOSTED`)
+
+<Card title="API_HOSTED" color="#4f46e5" icon="globe">
+  Start a journey and get back a `hostedUrl`. Redirect the customer to it or embed it in a WebView. EasyCred's screens handle the entire loan journey through to completion.
+</Card>
+
+**How it works:**
+
+<Steps>
+  <Step title="Initiate the Journey">
+    Call `POST /api/v1/partner/journey/initiate` with `channel: "API_HOSTED"`.
+  </Step>
+  <Step title="Redirect the Customer">
+    Use the returned `hostedUrl` to open EasyCred's hosted screens for your customer.
+  </Step>
+  <Step title="Track Progress">
+    Poll `GET /api/v1/partner/leads/{applicationId}/status` or subscribe to webhooks for real-time updates.
+  </Step>
+</Steps>
+
+<Note>
+  In Hosted mode, `GET /journey/{journeyId}` (the headless state endpoint) requires a `journeySession` and **cannot** be used. Use the application-status endpoint or webhooks instead.
+</Note>
+
+---
+
+## Headless Mode (`API_HEADLESS`)
+
+<Card title="API_HEADLESS" color="#0ea5e9" icon="terminal">
+  Your backend fully drives the loan journey over REST. You control every screen the customer sees, submitting their choices as actions and handling verification redirects.
+</Card>
+
+**How it works:**
+
+<Steps>
+  <Step title="Initiate the Journey">
+    Call `POST /api/v1/partner/journey/initiate` with `channel: "API_HEADLESS"`. You receive a `journeySession` token.
+  </Step>
+  <Step title="Poll Journey State">
+    Call `GET /api/v1/partner/journey/{journeyId}` with `X-Journey-Session` header to read the current `nextAction`.
+  </Step>
+  <Step title="Branch on Category">
+    Act on the `nextAction.category` — `POLL`, `COLLECT`, `REDIRECT`, or `TERMINAL`.
+  </Step>
+  <Step title="Submit Actions">
+    When the category is `COLLECT`, gather the customer's choice and `POST` it to `/journey/{journeyId}/action`.
+  </Step>
+  <Step title="Handle Redirects">
+    When the category is `REDIRECT`, open the verification URL for the customer, then signal return via `/redirect-returned`.
+  </Step>
+  <Step title="Read the Outcome">
+    When `TERMINAL`, read `data.outcome` and stop polling.
+  </Step>
+</Steps>
+
+---
+
+## Journey State Machine
+
+The journey always exposes a single `nextAction`. Your code branches on its `category`:
+
+<AccordionGroup>
+  <Accordion title="POLL — EasyCred is working in the background" icon="loader">
+    Wait `pollIntervalSeconds` then read state again. Do **not** call the lender directly.
+  </Accordion>
+
+  <Accordion title="COLLECT — A customer choice is needed" icon="file-input">
+    Gather the customer's input, then submit a POST action to the journey.
+  </Accordion>
+
+  <Accordion title="REDIRECT — A verification step" icon="arrow-up-right">
+    Open `currentNextAction.url` for the customer (KYC / e-sign / mandate). Signal return when done.
+  </Accordion>
+
+  <Accordion title="TERMINAL — The journey is finished" icon="database">
+    Read `outcome` and stop polling. See [Journey Outcomes](/integration-steps#journey-outcomes-terminal-states).
+  </Accordion>
+</AccordionGroup>
