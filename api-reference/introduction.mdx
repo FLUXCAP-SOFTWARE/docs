@@ -15,27 +15,14 @@ The EASYCRED Partner API is a REST API that returns JSON. All requests require H
 | **Production** | `https://api.easycred.co.in` | Live traffic and origination |
 | **Development / UAT** | `https://dev.easycred.co.in` | Integration testing and verification |
 
-<div className="not-prose my-6 flex flex-wrap gap-3">
-  <a
-    href="https://docs.easycred.co.in/api-reference/openapi.json"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-medium shadow-sm transition-all no-underline text-sm"
-  >
-    <span>Open OpenAPI Specification</span>
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-      <polyline points="15 3 21 3 21 9"></polyline>
-      <line x1="10" y1="14" x2="21" y2="3"></line>
-    </svg>
-  </a>
+<div className="not-prose my-6">
   <a
     href="https://docs.easycred.co.in/api-reference/postman_collection.json"
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white font-medium shadow-sm transition-all no-underline text-sm border border-slate-700"
+    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-medium shadow-sm transition-all no-underline text-sm"
   >
-    <span>Open Postman Collection</span>
+    <span>Import Postman Collection</span>
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
       <polyline points="7 10 12 15 17 10"></polyline>
@@ -46,32 +33,24 @@ The EASYCRED Partner API is a REST API that returns JSON. All requests require H
 
 ### How to Import into Postman
 
-<Tip>
-**Why does Postman sometimes create `api > v1 > partner...` folders?**
-
-Postman defaults to **Folder organization: Paths**, which slices the raw URL path into subfolders. To see the organized 5-folder structure (**Product Access**, **Hosted Journey**, **Headless Journey**, **Tracking and Leads**, **Webhooks**):
-- **Easiest:** Import the **Postman Collection URL** (`https://docs.easycred.co.in/api-reference/postman_collection.json`). It is pre-built with the 5 folders.
-- **Or via OpenAPI:** In Postman's import dialog, click **Show advanced settings** and change **Folder organization** from **Paths** to **Tags**.
-</Tip>
-
 <Steps>
   <Step title="Open Postman & Click Import">
-    Launch Postman and click the **Import** button in the top-left navigation bar.
+    Launch Postman in your workspace and click the **Import** button in the top-left navigation bar.
   </Step>
-  <Step title="Paste Link or Upload File">
-    In the import dialog, select **Link** and paste either:
-    - **Postman Collection (Recommended):**
-      ```text
-      https://docs.easycred.co.in/api-reference/postman_collection.json
-      ```
-    - **OpenAPI 3.1 Specification:**
-      ```text
-      https://docs.easycred.co.in/api-reference/openapi.json
-      ```
-      *(If importing via OpenAPI link, set **Folder organization** to **Tags** under advanced settings)*
+  <Step title="Paste Collection URL or Upload File">
+    In the import dialog, select **Link** and paste:
+    ```text
+    https://docs.easycred.co.in/api-reference/postman_collection.json
+    ```
+    *Alternatively, click the **Import Postman Collection** button above, save the file as `postman_collection.json`, and upload it into Postman.*
   </Step>
-  <Step title="Confirm and Import">
-    Click **Import**. Postman will create the **EASYCRED LENDING APIs** collection with the 5 clean step-wise folders and complete request schemas.
+  <Step title="Configure Collection Variables & Run">
+    Click **Import**. Open the imported **EASYCRED LENDING APIs** collection:
+    1. Navigate to the collection **Variables** tab.
+    2. Enter your `apiKey` and `signingSecret`.
+    3. Select your `baseUrl` (`https://api.easycred.co.in` for Production or `https://dev.easycred.co.in` for Sandbox).
+    
+    *HMAC-SHA256 request signatures, timestamps, nonces, and session tokens are automatically computed on every request by the built-in pre-request script.*
   </Step>
 </Steps>
 
