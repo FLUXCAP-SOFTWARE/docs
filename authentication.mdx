@@ -41,7 +41,7 @@ v1:<len(METHOD)>:<METHOD>:<len(PATH)>:<PATH>:<len(TIMESTAMP)>:<TIMESTAMP>:<len(N
 - `PATH`: Exact requested path without query parameters (e.g. `/v1/partner/journey/initiate` or `/api/v1/partner/products`).
 - `TIMESTAMP`: String value passed in `x-timestamp`.
 - `NONCE`: String value passed in `x-nonce`.
-- `BODY`: Raw JSON string payload. For `GET` requests (or requests without a body), use the empty string `""` (do not omit the trailing colon).
+- `BODY`: Raw JSON string payload. For `GET` requests (or any request without a payload body), the body has 0 characters, meaning the canonical string ends with the trailing colon `:` followed by nothing (e.g. `v1:3:GET:...:<nonce>:`). Do **not** append literal quotation mark characters (`""`).
 
 <Warning>
   **Exact Path Matching:** The `PATH` component in your HMAC string must match the exact path in your HTTP request. If you call `/v1/partner/journey/initiate`, sign `/v1/partner/journey/initiate`. If you call `/api/v1/partner/products`, sign `/api/v1/partner/products`.
