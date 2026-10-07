@@ -12,22 +12,44 @@ The EASYCRED Partner API enables partner platforms to originate loan application
 
 ## Environments & Base URLs
 
-<CardGroup cols={2}>
-  <Card title="Production" icon="shield-check">
-    `https://api.easycred.co.in`
+| Environment | Base URL | Purpose |
+| :--- | :--- | :--- |
+| **Production** | `https://api.easycred.co.in` | Live traffic and origination |
+| **Development / UAT** | `https://dev.easycred.co.in` | Integration testing and verification |
 
-    Live traffic and origination.
-  </Card>
-  <Card title="Development/ UAT" icon="flask-conical">
-    `https://dev.easycred.co.in`
+<div className="not-prose my-6">
+  <a
+    href="/openapi.json"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-medium shadow-sm transition-all no-underline text-sm"
+  >
+    <span>Open OpenAPI Specification</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <line x1="10" y1="14" x2="21" y2="3"></line>
+    </svg>
+  </a>
+</div>
 
-    Integration testing and end-to-end verification.
-  </Card>
-</CardGroup>
+### How to Import into Postman
 
-<Info>
-  Interactive OpenAPI specifications are available at `{baseURL}/api/v1/openapi.json`.
-</Info>
+<Steps>
+  <Step title="Open Postman & Click Import">
+    Launch Postman in your workspace and click the **Import** button in the top-left navigation bar.
+  </Step>
+  <Step title="Paste OpenAPI URL or Upload File">
+    In the import dialog, select **Link** and paste:
+    ```text
+    https://api.easycred.co.in/api/v1/openapi.json
+    ```
+    *Alternatively, click the **Open OpenAPI Specification** button above, save the file as `openapi.json`, and drag & drop it into Postman.*
+  </Step>
+  <Step title="Confirm and Import">
+    Click **Import**. Postman will automatically create the **EASYCRED LENDING APIs** collection with all pre-configured endpoints and parameter schemas.
+  </Step>
+</Steps>
 
 ---
 

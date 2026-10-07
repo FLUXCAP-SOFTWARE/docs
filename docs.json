@@ -62,14 +62,18 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
-            "group": "Endpoint examples",
-            "openapi": "api-reference/openapi.json"
+            "group": "Hosted Journey",
+            "openapi": "api-reference/hosted-openapi.json"
+          },
+          {
+            "group": "Headless Journey",
+            "openapi": "api-reference/headless-openapi.json"
           }
         ],
         "icon": "code-xml"
@@ -90,9 +94,9 @@
   },
   "contextual": {
     "options": [
-     "copy",
-    "view"
-  ]
+      "copy",
+      "view"
+    ]
   },
   "footer": {
     "socials": {

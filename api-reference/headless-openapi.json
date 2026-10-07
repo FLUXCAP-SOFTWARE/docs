@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "EASYCRED Partner API",
+    "title": "EASYCRED Headless Journey API",
     "version": "1.0.0",
-    "description": "Simplified EASYCRED Partner API specification for Hosted and Headless loan origination."
+    "description": "Full REST API loan origination. Drive every stage natively within your custom application."
   },
   "servers": [
     {
@@ -17,21 +17,8 @@
   ],
   "tags": [
     {
-      "name": "Hosted Journey",
-      "description": "Hosted webview integration with EASYCRED UI"
-    },
-    {
       "name": "Headless Journey",
-      "description": "Full backend REST API integration"
-    }
-  ],
-  "x-tagGroups": [
-    {
-      "name": "Partner API",
-      "tags": [
-        "Hosted Journey",
-        "Headless Journey"
-      ]
+      "description": "Native API-driven journey integration"
     }
   ],
   "components": {
@@ -46,7 +33,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-Journey-Session",
-        "description": "Journey session token returned during Headless initiation"
+        "description": "JWT session token returned from Step 1 (Initiate Headless Journey)"
       }
     }
   },
@@ -59,12 +46,11 @@
     "/api/v1/partner/journey/initiate": {
       "post": {
         "tags": [
-          "Hosted Journey",
           "Headless Journey"
         ],
-        "summary": "Initiate Loan Journey",
-        "operationId": "initiateJourney",
-        "description": "Initiate a loan journey in Hosted mode (returns hostedUrl) or Headless mode (returns journeySession token).",
+        "summary": "Step 1 - Initiate Headless Journey",
+        "operationId": "initiateHeadlessJourney",
+        "description": "Starts a headless loan journey. Returns journeyId, journeySession token, and the first nextAction.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82,9 +68,9 @@
                   "channel": {
                     "type": "string",
                     "enum": [
-                      "API_HOSTED"
+                      "API_HEADLESS"
                     ],
-                    "description": "Integration channel. Must be API_HOSTED."
+                    "description": "Integration channel. Must be API_HEADLESS."
                   },
                   "productCode": {
                     "type": "string",
@@ -196,7 +182,7 @@
         },
         "responses": {
           "200": {
-            "description": "Journey initiated successfully.",
+            "description": "Headless journey started successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -213,14 +199,8 @@
                           "type": "string",
                           "example": "65f2a1b9c9e77b0012345678"
                         },
-                        "hostedUrl": {
-                          "type": "string",
-                          "description": "Returned when channel is API_HOSTED",
-                          "example": "https://www.easycred.co.in/loan/resume?t=token_abc123"
-                        },
                         "journeySession": {
                           "type": "string",
-                          "description": "Returned when channel is API_HEADLESS",
                           "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                         },
                         "stage": {
@@ -228,7 +208,21 @@
                           "example": "POLL_FOR_OFFERS"
                         },
                         "nextAction": {
-                          "type": "object"
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "example": "POLL_FOR_OFFERS"
+                            },
+                            "category": {
+                              "type": "string",
+                              "example": "POLL"
+                            },
+                            "pollIntervalMs": {
+                              "type": "integer",
+                              "example": 3000
+                            }
+                          }
                         }
                       }
                     }
@@ -567,11 +561,11 @@
     "/api/v1/partner/leads/{applicationId}/status": {
       "get": {
         "tags": [
-          "Hosted Journey"
+          "Headless Journey"
         ],
-        "summary": "Step 2 - Check Application Status",
-        "operationId": "checkHostedStatus",
-        "description": "Polls the status of the loan application once the hosted journey finishes.",
+        "summary": "Step 5 - Get Final Status",
+        "operationId": "getFinalApplicationStatus",
+        "description": "Reads final approval status, sanctioned terms, and disbursal progress.",
         "parameters": [
           {
             "name": "applicationId",
@@ -580,13 +574,12 @@
             "schema": {
               "type": "string"
             },
-            "example": "app_65f2a1b9c9e77b0012345678",
-            "description": "Application identifier returned from initiate or status callback."
+            "example": "app_65f2a1b9c9e77b0012345678"
           }
         ],
         "responses": {
           "200": {
-            "description": "Application status and sanction details.",
+            "description": "Final application status.",
             "content": {
               "application/json": {
                 "schema": {
@@ -638,9 +631,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Application not found."
           }
         }
       }
