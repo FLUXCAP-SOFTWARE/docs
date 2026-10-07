@@ -1,114 +1,113 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "EASYCRED Partner API",
+    "title": "EASYCRED LENDING APIs",
     "version": "1.0.0",
-    "description": "EASYCRED-managed secure partner API. All requests require a Bearer API key plus HMAC request signing (X-Signature / X-Timestamp / X-Nonce). No raw customer PII is exposed by this version. Signing convention: the HMAC-SHA256 is computed over method, path, timestamp, nonce and the raw request body. For GET requests (and any request with no body) the body component is the EMPTY string '' — sign over '' for those requests."
+    "description": "Comprehensive EASYCRED Partner API specification for Product Discovery, Hosted Journeys, Headless Journeys, Application Tracking, and Webhooks."
   },
   "servers": [
     {
       "url": "https://api.easycred.co.in",
-      "description": "Production"
+      "description": "Production API"
     },
     {
       "url": "https://dev.easycred.co.in",
-      "description": "Development / UAT"
+      "description": "Sandbox / Development API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Product Access",
+      "description": "Discover and query eligible loan products"
+    },
+    {
+      "name": "Hosted Journey",
+      "description": "EASYCRED-hosted webview integration"
+    },
+    {
+      "name": "Headless Journey",
+      "description": "Full native REST API journey integration"
+    },
+    {
+      "name": "Tracking and Leads",
+      "description": "Track applications and query lead status"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Register, list, and manage real-time webhook subscriptions"
     }
   ],
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "API key of the form ec_(live|test)_<prefix>_<secret>. Scopes are listed per operation."
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "EASYCRED Partner API Key"
       }
     },
     "schemas": {
       "ApiError": {
         "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": false
-          },
-          "error": {
-            "type": "string"
-          }
-        },
         "required": [
           "success",
           "error"
-        ]
-      },
-      "Product": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "OFFLINE",
-              "ONLINE"
-            ]
-          },
-          "provider": {
-            "type": "string"
-          },
-          "icon": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "displayName",
-          "category",
-          "channel",
-          "provider",
-          "icon"
-        ]
-      },
-      "LeadSummary": {
-        "type": "object",
-        "description": "Application metadata only — never raw PII or encrypted fields.",
-        "properties": {
-          "applicationId": {
-            "type": "string"
-          },
-          "loanType": {
-            "type": "string"
-          },
-          "loanAmount": {
-            "type": "number"
-          },
-          "status": {
-            "type": "string"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "applicationId"
-        ]
-      },
-      "ProductListResponse": {
-        "type": "object",
+        ],
         "properties": {
           "success": {
             "type": "boolean",
-            "const": true
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Invalid signature or expired timestamp"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "required": [
+          "code",
+          "displayName",
+          "category"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "ONLINE_PERSONAL",
+              "ONLINE_SHORT_TERM",
+              "ONLINE_BUSINESS",
+              "ONLINE_GOLD"
+            ],
+            "example": "ONLINE_PERSONAL"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Personal Loan"
+          },
+          "category": {
+            "type": "string",
+            "example": "PERSONAL_LOAN"
+          }
+        }
+      },
+      "ProductListResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
           },
           "data": {
             "type": "object",
+            "required": [
+              "products"
+            ],
             "properties": {
               "products": {
                 "type": "array",
@@ -116,387 +115,93 @@
                   "$ref": "#/components/schemas/Product"
                 }
               }
-            },
-            "required": [
-              "products"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "LeadListResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "leads": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LeadSummary"
-                }
-              },
-              "total": {
-                "type": "integer"
-              },
-              "page": {
-                "type": "integer"
-              },
-              "limit": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "leads",
-              "total",
-              "page",
-              "limit"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "LeadStatusResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "applicationId": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "applicationId",
-              "status"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "WebhookSubscription": {
-        "type": "object",
-        "description": "A registered webhook subscription (the signing secret is never echoed here).",
-        "properties": {
-          "subscriptionId": {
-            "type": "string",
-            "description": "Stable id of the form whs_<uuid>."
-          },
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "HTTPS delivery endpoint (public host only)."
-          },
-          "subscribedEvents": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "journey.initiated",
-                "journey.updated",
-                "journey.completed",
-                "journey.rejected",
-                "journey.failed"
-              ]
-            }
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "failureCount": {
-            "type": "integer"
-          },
-          "lastDeliveryAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "subscriptionId",
-          "url",
-          "subscribedEvents",
-          "isActive",
-          "failureCount"
-        ]
-      },
-      "WebhookListResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "subscriptions": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/WebhookSubscription"
-                }
-              }
-            },
-            "required": [
-              "subscriptions"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "WebhookCreateRequest": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "HTTPS endpoint; must not target a private host/IP."
-          },
-          "events": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "string",
-              "enum": [
-                "journey.initiated",
-                "journey.updated",
-                "journey.completed",
-                "journey.rejected",
-                "journey.failed"
-              ]
             }
           }
-        },
-        "required": [
-          "url",
-          "events"
-        ]
+        }
       },
-      "WebhookCreateResponse": {
+      "CustomerDetails": {
         "type": "object",
-        "description": "Returned on create. The plaintext `secret` is shown ONCE — store it now.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "subscriptionId": {
-                "type": "string"
-              },
-              "secret": {
-                "type": "string",
-                "description": "HMAC signing secret. Returned exactly once."
-              }
-            },
-            "required": [
-              "subscriptionId",
-              "secret"
-            ]
-          }
-        },
         "required": [
-          "success",
-          "data"
-        ]
-      },
-      "WebhookSecretResponse": {
-        "type": "object",
-        "description": "Returned on rotate-secret. The new plaintext `secret` is shown ONCE.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "secret": {
-                "type": "string",
-                "description": "New HMAC signing secret. Returned exactly once."
-              }
-            },
-            "required": [
-              "secret"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "WebhookDeleteResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "deleted": {
-                "type": "boolean",
-                "const": true
-              }
-            },
-            "required": [
-              "deleted"
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "NextAction": {
-        "type": "object",
-        "description": "The mirrored next step the client must drive (POLL / REDIRECT / COLLECT / TERMINAL).",
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "e.g. POLL_FOR_OFFERS, SELECT_OFFER, SUBMIT_BANK_DETAILS, REDIRECT_TO_KYC, COMPLETED."
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "POLL",
-              "REDIRECT",
-              "COLLECT",
-              "TERMINAL"
-            ]
-          }
-        },
-        "required": [
-          "type"
-        ]
-      },
-      "UserDetails": {
-        "type": "object",
-        "description": "Applicant details. Provide monthlyIncome OR annualIncome (at least one).",
-        "required": [
+          "fullName",
           "pan",
           "dob",
           "gender",
-          "personalEmail",
           "employmentType",
-          "pinCode",
-          "termsAccepted"
+          "pinCode"
         ],
         "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
+          "fullName": {
+            "type": "string",
+            "example": "Rahul Sharma"
           },
           "pan": {
             "type": "string",
-            "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$",
-            "example": "DJHPG8765E"
+            "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$",
+            "example": "ABCDE1234F"
           },
           "dob": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-            "description": "YYYY-MM-DD.",
-            "example": "1990-05-01"
+            "example": "1992-06-15"
           },
           "gender": {
             "type": "string",
             "enum": [
               "MALE",
               "FEMALE",
-              "TRANSGENDER",
               "OTHER"
-            ]
-          },
-          "personalEmail": {
-            "type": "string",
-            "format": "email"
-          },
-          "officialEmail": {
-            "type": "string",
-            "format": "email"
+            ],
+            "example": "MALE"
           },
           "employmentType": {
             "type": "string",
             "enum": [
               "salaried",
               "selfEmployed"
-            ]
-          },
-          "companyName": {
-            "type": "string",
-            "description": "Registered business name (required for ONLINE_BUSINESS journeys).",
-            "example": "Acme Traders"
+            ],
+            "example": "salaried"
           },
           "monthlyIncome": {
             "type": "number",
-            "description": "Provide this OR annualIncome."
+            "example": 65000
           },
           "annualIncome": {
             "type": "number",
-            "description": "Provide this OR monthlyIncome."
+            "example": 4800000
           },
-          "addressL1": {
-            "type": "string"
+          "companyName": {
+            "type": "string",
+            "example": "Patel Industrial Solutions Pvt Ltd"
           },
-          "addressL2": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
+          "udyamNumber": {
+            "type": "string",
+            "example": "UDYAM-KR-03-0123456"
           },
           "pinCode": {
             "type": "string",
             "pattern": "^\\d{6}$",
-            "description": "Note: camelCase pinCode.",
             "example": "560001"
           },
-          "endUse": {
-            "type": "string"
+          "city": {
+            "type": "string",
+            "example": "Bengaluru"
           },
-          "termsAccepted": {
-            "type": "boolean",
-            "enum": [
-              true
-            ],
-            "description": "Must be true."
+          "state": {
+            "type": "string",
+            "example": "Karnataka"
+          },
+          "addressL1": {
+            "type": "string",
+            "example": "Flat 402, Green Glen Layout, Bellandur"
+          },
+          "addressL2": {
+            "type": "string",
+            "example": "Near EcoWorld Tech Park"
           }
         }
       },
       "GoldLoanDetails": {
         "type": "object",
-        "description": "Required when productCode is ONLINE_GOLD.",
         "required": [
           "jewellaryList",
           "grams"
@@ -507,169 +212,287 @@
             "items": {
               "type": "string"
             },
-            "minItems": 1,
             "example": [
-              "Gold Ring",
-              "Gold Chain"
+              "Gold Bangle 22K (2 Pcs)",
+              "Gold Chain 22K (1 Pc)"
             ]
           },
           "grams": {
             "type": "string",
-            "pattern": "^\\d+(\\.\\d+)?$",
-            "description": "Numeric string (e.g. \"50\").",
-            "example": "50"
+            "example": "42.5"
           }
         }
       },
-      "JourneyInitiateRequest": {
+      "HostedInitiateRequest": {
         "type": "object",
+        "required": [
+          "channel",
+          "productCode",
+          "mobile",
+          "loanAmount",
+          "customer"
+        ],
         "properties": {
           "channel": {
             "type": "string",
             "enum": [
-              "API_HOSTED",
-              "API_HEADLESS"
-            ]
+              "API_HOSTED"
+            ],
+            "example": "API_HOSTED"
           },
           "productCode": {
             "type": "string",
             "enum": [
               "ONLINE_PERSONAL",
-              "ONLINE_GOLD",
               "ONLINE_SHORT_TERM",
               "ONLINE_BUSINESS",
-              "PERSONAL_LOAN",
-              "GOLD_LOAN"
+              "ONLINE_GOLD"
             ],
-            "description": "Product catalog code: ONLINE_PERSONAL, ONLINE_SHORT_TERM (Pocket Loan), ONLINE_BUSINESS (Business Loan), or ONLINE_GOLD."
+            "example": "ONLINE_PERSONAL"
           },
           "mobile": {
             "type": "string",
             "pattern": "^[6-9]\\d{9}$",
             "example": "9876543210"
           },
+          "loanAmount": {
+            "type": "number",
+            "example": 150000
+          },
           "customer": {
-            "$ref": "#/components/schemas/UserDetails"
+            "$ref": "#/components/schemas/CustomerDetails"
           },
           "goldLoanDetails": {
             "$ref": "#/components/schemas/GoldLoanDetails"
           }
-        },
-        "required": [
-          "channel",
-          "productCode",
-          "mobile",
-          "customer"
-        ]
+        }
       },
-      "JourneyInitiateResponse": {
+      "HostedInitiateResponse": {
         "type": "object",
-        "description": "API_HOSTED returns a `hostedUrl` (single-use resume link to hand to the customer). API_HEADLESS returns a `journeySession` token. Authorize subsequent /action and /{journeyId} calls by passing it in the `journey_session` cookie OR the `X-Journey-Session` header — NOT in Authorization, which carries your API key.",
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
-            "const": true
+            "example": true
           },
           "data": {
             "type": "object",
+            "required": [
+              "journeyId",
+              "hostedUrl",
+              "nextAction"
+            ],
             "properties": {
               "journeyId": {
-                "type": "string"
-              },
-              "nextAction": {
-                "$ref": "#/components/schemas/NextAction"
+                "type": "string",
+                "example": "jrn_67a12b3c4d5e6f7a"
               },
               "hostedUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "API_HOSTED only."
+                "example": "https://apply.easycred.co.in/journey/resume?token=eyJhbGciOi..."
               },
-              "journeySession": {
-                "type": "string",
-                "description": "API_HEADLESS only — pass back via the journey_session cookie or X-Journey-Session header on /action and /{journeyId}."
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "WAITING_FOR_REDIRECT"
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "WAIT"
+                  }
+                }
               }
-            },
-            "required": [
-              "journeyId",
-              "nextAction"
-            ]
+            }
           }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
+        }
       },
-      "SelectOfferPayload": {
+      "HeadlessInitiateRequest": {
         "type": "object",
-        "description": "Payload for kind=SELECT_OFFER.",
+        "required": [
+          "channel",
+          "productCode",
+          "mobile",
+          "loanAmount",
+          "customer"
+        ],
         "properties": {
-          "offerId": {
+          "channel": {
             "type": "string",
-            "description": "An offerId from data.offers[] (GET /{journeyId})."
+            "enum": [
+              "API_HEADLESS"
+            ],
+            "example": "API_HEADLESS"
+          },
+          "productCode": {
+            "type": "string",
+            "enum": [
+              "ONLINE_PERSONAL",
+              "ONLINE_SHORT_TERM",
+              "ONLINE_BUSINESS",
+              "ONLINE_GOLD"
+            ],
+            "example": "ONLINE_PERSONAL"
+          },
+          "mobile": {
+            "type": "string",
+            "pattern": "^[6-9]\\d{9}$",
+            "example": "9876543210"
           },
           "loanAmount": {
             "type": "number",
-            "exclusiveMinimum": 0,
-            "description": "Requested principal (> 0)."
+            "example": 150000
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerDetails"
+          },
+          "goldLoanDetails": {
+            "$ref": "#/components/schemas/GoldLoanDetails"
           }
-        },
+        }
+      },
+      "HeadlessInitiateResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "journeyId",
+              "journeySession",
+              "nextAction"
+            ],
+            "properties": {
+              "journeyId": {
+                "type": "string",
+                "example": "jrn_67a12b3c4d5e6f7a"
+              },
+              "journeySession": {
+                "type": "string",
+                "example": "jsess_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              },
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "POLL_LENDER_OFFERS"
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "POLL"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LenderOffer": {
+        "type": "object",
         "required": [
           "offerId",
-          "loanAmount"
-        ]
-      },
-      "SelectGoldLoanBranchPayload": {
-        "type": "object",
-        "description": "Payload for kind=SELECT_GOLD_LOAN_BRANCH.",
+          "lenderName",
+          "sanctionAmount",
+          "roi",
+          "tenureMonths",
+          "emi"
+        ],
         "properties": {
           "offerId": {
             "type": "string",
-            "description": "An offerId from data.offers[] (GET /{journeyId})."
+            "example": "off_apollo_101"
           },
-          "branchLocationId": {
+          "lenderName": {
             "type": "string",
-            "description": "The chosen branch. This is the `id` of an entry in data.offers[].branchLocations[] returned by GET /{journeyId} while the journey sits at SELECT_GOLD_LOAN_BRANCH."
+            "example": "Apollo Finvest"
+          },
+          "sanctionAmount": {
+            "type": "number",
+            "example": 150000
+          },
+          "roi": {
+            "type": "number",
+            "example": 14.5
+          },
+          "tenureMonths": {
+            "type": "number",
+            "example": 24
+          },
+          "emi": {
+            "type": "number",
+            "example": 7236
           }
-        },
-        "required": [
-          "offerId",
-          "branchLocationId"
-        ]
+        }
       },
-      "SubmitBankAccountPayload": {
+      "JourneyStateResponse": {
         "type": "object",
-        "description": "Payload for kind=SUBMIT_BANK_ACCOUNT (the FSM step is SUBMIT_BANK_DETAILS).",
-        "properties": {
-          "accHolderName": {
-            "type": "string"
-          },
-          "acctype": {
-            "type": "string",
-            "enum": [
-              "SAVING",
-              "CURRENT"
-            ]
-          },
-          "accNo": {
-            "type": "string",
-            "minLength": 6
-          },
-          "ifscCode": {
-            "type": "string",
-            "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
-          }
-        },
         "required": [
-          "accHolderName",
-          "acctype",
-          "accNo",
-          "ifscCode"
-        ]
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "journeyId",
+              "step",
+              "nextAction"
+            ],
+            "properties": {
+              "journeyId": {
+                "type": "string",
+                "example": "jrn_67a12b3c4d5e6f7a"
+              },
+              "step": {
+                "type": "string",
+                "example": "SELECT_OFFER"
+              },
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "SELECT_OFFER"
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "USER_ACTION"
+                  }
+                }
+              },
+              "offers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LenderOffer"
+                }
+              }
+            }
+          }
+        }
       },
       "JourneyActionRequest": {
         "type": "object",
-        "description": "The payload shape depends on `kind`:\n- SELECT_OFFER → { offerId, loanAmount }\n- SELECT_GOLD_LOAN_BRANCH → { offerId, branchLocationId } where branchLocationId is an `id` from data.offers[].branchLocations[] (see GET /{journeyId})\n- SUBMIT_BANK_ACCOUNT → { accHolderName, acctype, accNo, ifscCode }",
+        "required": [
+          "kind",
+          "payload"
+        ],
         "properties": {
           "kind": {
             "type": "string",
@@ -677,54 +500,61 @@
               "SELECT_OFFER",
               "SELECT_GOLD_LOAN_BRANCH",
               "SUBMIT_BANK_ACCOUNT"
-            ]
+            ],
+            "example": "SELECT_OFFER"
           },
           "payload": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SelectOfferPayload"
-              },
-              {
-                "$ref": "#/components/schemas/SelectGoldLoanBranchPayload"
-              },
-              {
-                "$ref": "#/components/schemas/SubmitBankAccountPayload"
-              }
-            ]
+            "type": "object",
+            "example": {
+              "offerId": "off_apollo_101",
+              "loanAmount": 150000
+            }
           }
-        },
-        "required": [
-          "kind",
-          "payload"
-        ]
+        }
       },
       "JourneyActionResponse": {
         "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "const": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "nextAction": {
-                "$ref": "#/components/schemas/NextAction"
-              }
-            },
-            "required": [
-              "nextAction"
-            ]
-          }
-        },
         "required": [
           "success",
           "data"
-        ]
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "nextAction"
+            ],
+            "properties": {
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "REDIRECT_TO_KYC"
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "REDIRECT"
+                  },
+                  "url": {
+                    "type": "string",
+                    "example": "https://kyc.partner-lender.com/verify?session=..."
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "JourneyRedirectReturnedRequest": {
         "type": "object",
-        "description": "Signal that the customer has returned from a hosted redirect step.",
+        "required": [
+          "kind"
+        ],
         "properties": {
           "kind": {
             "type": "string",
@@ -733,265 +563,411 @@
               "MANDATE",
               "ESIGN"
             ],
-            "description": "The redirect step that was completed."
+            "example": "KYC"
           }
-        },
-        "required": [
-          "kind"
-        ]
+        }
       },
       "JourneyRedirectReturnedResponse": {
         "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
-            "const": true
+            "example": true
           },
           "data": {
             "type": "object",
-            "properties": {
-              "nextAction": {
-                "$ref": "#/components/schemas/NextAction"
-              }
-            },
             "required": [
               "nextAction"
-            ]
+            ],
+            "properties": {
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "POLL_KYC_STATUS"
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "POLL"
+                  }
+                }
+              }
+            }
           }
-        },
+        }
+      },
+      "LeadSummary": {
+        "type": "object",
+        "required": [
+          "applicationId",
+          "loanType",
+          "loanAmount",
+          "status",
+          "submittedAt"
+        ],
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "example": "app_67a12b3c4d5e6f7a"
+          },
+          "loanType": {
+            "type": "string",
+            "example": "PERSONAL_LOAN"
+          },
+          "loanAmount": {
+            "type": "number",
+            "example": 150000
+          },
+          "status": {
+            "type": "string",
+            "example": "APPROVED"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-07T06:30:00.000Z"
+          }
+        }
+      },
+      "LeadListResponse": {
+        "type": "object",
         "required": [
           "success",
           "data"
-        ]
-      },
-      "BranchLocation": {
-        "type": "object",
-        "description": "A gold-loan branch the customer can collateralise at. Echo the `id` back as the `branchLocationId` in a SELECT_GOLD_LOAN_BRANCH action.",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Send this back as `branchLocationId` on SELECT_GOLD_LOAN_BRANCH."
-          },
-          "branchName": {
-            "type": "string",
-            "example": "Ahmedabad - Panchvati"
-          },
-          "address": {
-            "type": "string",
-            "description": "Full postal address (city/state are embedded here)."
-          },
-          "latitude": {
-            "type": "number"
-          },
-          "longitude": {
-            "type": "number"
-          },
-          "isSelected": {
-            "type": "boolean",
-            "description": "Whether this branch is already the selected one."
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "JourneyOffer": {
-        "type": "object",
-        "description": "A lender offer mirrored from the journey. Fields beyond those listed may be present (passed through from the lender) — rely only on the documented ones.",
-        "properties": {
-          "offerId": {
-            "type": "string"
-          },
-          "sellerName": {
-            "type": "string",
-            "description": "Lender / seller display name."
-          },
-          "principalAmount": {
-            "type": "number"
-          },
-          "emiAmount": {
-            "type": "number"
-          },
-          "tenure": {
-            "type": "number",
-            "description": "Tenure in months."
-          },
-          "interestRate": {
-            "type": "number"
-          },
-          "apr": {
-            "type": "number"
-          },
-          "processingFees": {
-            "type": "number"
-          },
-          "netDisbursedAmount": {
-            "type": "number"
-          },
-          "minimumLoanAmount": {
-            "type": "number"
-          },
-          "kfsLink": {
-            "type": "string",
-            "description": "Key Fact Statement link."
-          },
-          "branchLocations": {
-            "type": "array",
-            "description": "Present on gold-loan offers at the SELECT_GOLD_LOAN_BRANCH step. Pick one and send its `id`.",
-            "items": {
-              "$ref": "#/components/schemas/BranchLocation"
-            }
-          }
-        },
-        "required": [
-          "offerId"
-        ]
-      },
-      "JourneyView": {
-        "type": "object",
-        "description": "Mirrored journey state. Read-only off our DB; never exposes raw customer PII.",
-        "properties": {
-          "journeyId": {
-            "type": "string"
-          },
-          "productCode": {
-            "type": "string"
-          },
-          "channel": {
-            "type": "string",
-            "example": "API_HEADLESS"
-          },
-          "currentNextAction": {
-            "$ref": "#/components/schemas/NextAction"
-          },
-          "offers": {
-            "type": "array",
-            "description": "Lender offers. On a gold journey at SELECT_GOLD_LOAN_BRANCH, each offer carries branchLocations[].",
-            "items": {
-              "$ref": "#/components/schemas/JourneyOffer"
-            }
-          },
-          "selectedOffer": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "The offer the customer selected, if any."
-          },
-          "outcome": {
-            "type": "string",
-            "description": "Terminal outcome (e.g. COMPLETED, REJECTED), if reached."
-          },
-          "pollIntervalSeconds": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "description": "Suggested poll cadence for the current POLL step."
-          },
-          "referralOffers": {
-            "type": "array",
-            "description": "Secondary referral offers (such as Apollo Finvest) available for the borrower.",
-            "items": {
-              "$ref": "#/components/schemas/ReferralOffer"
-            }
-          }
-        },
-        "required": [
-          "journeyId",
-          "productCode",
-          "channel",
-          "currentNextAction",
-          "offers"
-        ]
-      },
-      "JourneyStateResponse": {
-        "type": "object",
-        "description": "Mirrored journey view (offers, selectedOffer, nextAction, outcome). Read-only off our DB.",
+        ],
         "properties": {
           "success": {
             "type": "boolean",
-            "const": true
+            "example": true
           },
           "data": {
-            "$ref": "#/components/schemas/JourneyView"
+            "type": "object",
+            "required": [
+              "leads",
+              "total",
+              "page",
+              "limit"
+            ],
+            "properties": {
+              "leads": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LeadSummary"
+                }
+              },
+              "total": {
+                "type": "number",
+                "example": 42
+              },
+              "page": {
+                "type": "number",
+                "example": 1
+              },
+              "limit": {
+                "type": "number",
+                "example": 20
+              }
+            }
           }
-        },
+        }
+      },
+      "LeadStatusResponse": {
+        "type": "object",
         "required": [
           "success",
           "data"
-        ]
-      },
-      "ReferralOffer": {
-        "type": "object",
+        ],
         "properties": {
-          "lenderCode": {
-            "type": "string",
-            "example": "APOLLO_FINVEST"
+          "success": {
+            "type": "boolean",
+            "example": true
           },
-          "name": {
+          "data": {
+            "type": "object",
+            "required": [
+              "applicationId",
+              "status"
+            ],
+            "properties": {
+              "applicationId": {
+                "type": "string",
+                "example": "app_67a12b3c4d5e6f7a"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "IN_PROGRESS",
+                  "APPROVED",
+                  "DISBURSED",
+                  "REJECTED"
+                ],
+                "example": "DISBURSED"
+              }
+            }
+          }
+        }
+      },
+      "WebhookSubscription": {
+        "type": "object",
+        "required": [
+          "subscriptionId",
+          "url",
+          "events",
+          "createdAt"
+        ],
+        "properties": {
+          "subscriptionId": {
             "type": "string",
-            "example": "Apollo Finvest"
+            "example": "65b9e812f1a23b4c5d6e7f8a"
           },
-          "redirectUrl": {
+          "url": {
             "type": "string",
             "format": "uri",
-            "example": "https://dev.easycred.co.in/r/af83c1b"
+            "example": "https://partner.yourdomain.com/api/webhooks/easycred"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "journey.status_updated",
+              "application.approved",
+              "application.disbursed"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-07T07:00:00.000Z"
           }
-        },
+        }
+      },
+      "WebhookCreateRequest": {
+        "type": "object",
         "required": [
-          "lenderCode",
-          "redirectUrl"
-        ]
+          "url",
+          "events"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://partner.yourdomain.com/api/webhooks/easycred"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "journey.status_updated",
+              "journey.offer_selected",
+              "journey.completed",
+              "application.approved",
+              "application.disbursed",
+              "application.rejected"
+            ]
+          }
+        }
+      },
+      "WebhookCreateResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "subscriptionId",
+              "url",
+              "events",
+              "secret"
+            ],
+            "properties": {
+              "subscriptionId": {
+                "type": "string",
+                "example": "65b9e812f1a23b4c5d6e7f8a"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://partner.yourdomain.com/api/webhooks/easycred"
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "journey.status_updated",
+                  "application.approved",
+                  "application.disbursed"
+                ]
+              },
+              "secret": {
+                "type": "string",
+                "description": "Signing secret returned ONCE only",
+                "example": "whsec_7f9a2b4c8e1d3f5a6b0c2d4e8f1a3b5c"
+              }
+            }
+          }
+        }
+      },
+      "WebhookListResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "subscriptions"
+            ],
+            "properties": {
+              "subscriptions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WebhookSubscription"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WebhookSecretResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "subscriptionId",
+              "secret"
+            ],
+            "properties": {
+              "subscriptionId": {
+                "type": "string",
+                "example": "65b9e812f1a23b4c5d6e7f8a"
+              },
+              "secret": {
+                "type": "string",
+                "example": "whsec_99a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4"
+              }
+            }
+          }
+        }
+      },
+      "WebhookDeleteResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "deleted"
+            ],
+            "properties": {
+              "deleted": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          }
+        }
       }
     }
   },
   "security": [
     {
-      "bearerAuth": []
+      "apiKeyAuth": []
     }
   ],
   "paths": {
     "/api/v1/partner/products": {
       "get": {
-        "summary": "List Eligible Products",
-        "security": [
-          {
-            "bearerAuth": [
-              "products:read"
-            ]
-          }
+        "tags": [
+          "Product Access"
         ],
+        "summary": "List Eligible Products",
+        "operationId": "listEligibleProducts",
+        "description": "Discover and query all active loan products enabled for your partner API key (Personal Loan, Pocket Loan, Business Loan, Gold Loan).",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "List of active products",
             "content": {
               "application/json": {
                 "schema": {
@@ -1000,8 +976,18 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1011,206 +997,7 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product Access"
-        ]
-      }
-    },
-    "/api/v1/partner/leads": {
-      "get": {
-        "summary": "List Applications",
-        "security": [
-          {
-            "bearerAuth": [
-              "leads:read"
-            ]
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Signature",
-            "in": "header",
-            "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Timestamp",
-            "in": "header",
-            "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Nonce",
-            "in": "header",
-            "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LeadListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but missing the required scope / product access.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Tracking & Leads"
-        ]
-      }
-    },
-    "/api/v1/partner/leads/{applicationId}/status": {
-      "get": {
-        "summary": "Get Application Status",
-        "security": [
-          {
-            "bearerAuth": [
-              "leads:status:read"
-            ]
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Signature",
-            "in": "header",
-            "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Timestamp",
-            "in": "header",
-            "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Nonce",
-            "in": "header",
-            "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applicationId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LeadStatusResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -1220,7 +1007,7 @@
             }
           },
           "404": {
-            "description": "Application not found.",
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1230,7 +1017,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -1239,64 +1026,177 @@
               }
             }
           }
-        },
-        "tags": [
-          "Tracking & Leads"
-        ]
+        }
       }
     },
     "/api/v1/partner/journey/initiate": {
       "post": {
-        "summary": "Initiate Loan Journey",
-        "security": [
-          {
-            "bearerAuth": [
-              "leads:create"
-            ]
-          }
+        "tags": [
+          "Hosted Journey"
         ],
+        "summary": "Step 1 - Initiate Hosted Journey",
+        "operationId": "initiateHostedJourney",
+        "description": "Starts a hosted loan journey (channel: API_HOSTED) and returns a single-use hostedUrl to redirect the applicant to EASYCRED web screens.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostedInitiateRequest"
+              },
+              "examples": {
+                "personalLoan": {
+                  "summary": "Personal Loan (ONLINE_PERSONAL)",
+                  "value": {
+                    "channel": "API_HOSTED",
+                    "productCode": "ONLINE_PERSONAL",
+                    "mobile": "9876543210",
+                    "loanAmount": 150000,
+                    "customer": {
+                      "fullName": "Rahul Sharma",
+                      "pan": "ABCDE1234F",
+                      "dob": "1992-06-15",
+                      "gender": "MALE",
+                      "employmentType": "salaried",
+                      "monthlyIncome": 65000,
+                      "pinCode": "560001",
+                      "city": "Bengaluru",
+                      "state": "Karnataka",
+                      "addressL1": "Flat 402, Green Glen Layout, Bellandur"
+                    }
+                  }
+                },
+                "pocketLoan": {
+                  "summary": "Pocket Loan (ONLINE_SHORT_TERM)",
+                  "value": {
+                    "channel": "API_HOSTED",
+                    "productCode": "ONLINE_SHORT_TERM",
+                    "mobile": "9876543210",
+                    "loanAmount": 25000,
+                    "customer": {
+                      "fullName": "Ananya Verma",
+                      "pan": "BCDEF2345G",
+                      "dob": "1997-09-20",
+                      "gender": "FEMALE",
+                      "employmentType": "salaried",
+                      "monthlyIncome": 35000,
+                      "pinCode": "110001",
+                      "city": "New Delhi",
+                      "state": "Delhi",
+                      "addressL1": "Connaught Place"
+                    }
+                  }
+                },
+                "businessLoan": {
+                  "summary": "Business Loan (ONLINE_BUSINESS)",
+                  "value": {
+                    "channel": "API_HOSTED",
+                    "productCode": "ONLINE_BUSINESS",
+                    "mobile": "9876543210",
+                    "loanAmount": 1000000,
+                    "customer": {
+                      "fullName": "Vikram Patel",
+                      "companyName": "Patel Industrial Solutions Pvt Ltd",
+                      "pan": "ABCDE5678G",
+                      "dob": "1985-08-22",
+                      "gender": "MALE",
+                      "employmentType": "selfEmployed",
+                      "annualIncome": 4800000,
+                      "udyamNumber": "UDYAM-KR-03-0123456",
+                      "pinCode": "400051",
+                      "city": "Mumbai",
+                      "state": "Maharashtra",
+                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex"
+                    }
+                  }
+                },
+                "goldLoan": {
+                  "summary": "Gold Loan (ONLINE_GOLD)",
+                  "value": {
+                    "channel": "API_HOSTED",
+                    "productCode": "ONLINE_GOLD",
+                    "mobile": "9876543210",
+                    "loanAmount": 200000,
+                    "customer": {
+                      "fullName": "Sunita Verma",
+                      "pan": "FGHIJ5678K",
+                      "dob": "1988-04-10",
+                      "gender": "FEMALE",
+                      "employmentType": "selfEmployed",
+                      "monthlyIncome": 40000,
+                      "pinCode": "110024",
+                      "city": "New Delhi",
+                      "state": "Delhi",
+                      "addressL1": "A-45, Lajpat Nagar 4"
+                    },
+                    "goldLoanDetails": {
+                      "jewellaryList": [
+                        "Gold Bangle 22K (2 Pcs)",
+                        "Gold Chain 22K (1 Pc)"
+                      ],
+                      "grams": "42.5"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Journey initiated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JourneyInitiateResponse"
+                  "$ref": "#/components/schemas/HostedInitiateResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Missing/invalid channel, productCode, mobile or customer.",
+            "description": "Bad Request - Validation or payload failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1306,7 +1206,7 @@
             }
           },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1316,7 +1216,17 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1326,7 +1236,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -1335,72 +1245,602 @@
               }
             }
           }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JourneyInitiateRequest"
-              }
-            }
-          }
-        },
-        "tags": [
-          "Loan Journey"
-        ]
+        }
       }
     },
-    "/api/v1/partner/journey/{journeyId}/action": {
-      "post": {
-        "summary": "Submit Customer Action",
-        "security": [
-          {
-            "bearerAuth": [
-              "offers:select"
-            ]
-          }
+    "/api/v1/partner/journey/{journeyId}": {
+      "get": {
+        "tags": [
+          "Hosted Journey"
         ],
+        "summary": "Step 2 - Check Journey Status",
+        "operationId": "checkHostedJourneyStatus",
+        "description": "Check the real-time status and outcome of the hosted loan journey using the journeyId.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           },
           {
             "name": "journeyId",
             "in": "path",
             "required": true,
+            "description": "Journey ID returned by initiate",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "jrn_67a12b3c4d5e6f7a"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Journey status and outcome",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partner/journey/initiate": {
+      "post": {
+        "tags": [
+          "Headless Journey"
+        ],
+        "summary": "Step 1 - Initiate Headless Journey",
+        "operationId": "initiateHeadlessJourney",
+        "description": "Starts a headless loan journey (channel: API_HEADLESS) and returns a journeySession token for subsequent REST step driving.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeadlessInitiateRequest"
+              },
+              "examples": {
+                "personalLoan": {
+                  "summary": "Personal Loan (ONLINE_PERSONAL)",
+                  "value": {
+                    "channel": "API_HEADLESS",
+                    "productCode": "ONLINE_PERSONAL",
+                    "mobile": "9876543210",
+                    "loanAmount": 150000,
+                    "customer": {
+                      "fullName": "Rahul Sharma",
+                      "pan": "ABCDE1234F",
+                      "dob": "1992-06-15",
+                      "gender": "MALE",
+                      "employmentType": "salaried",
+                      "monthlyIncome": 65000,
+                      "pinCode": "560001",
+                      "city": "Bengaluru",
+                      "state": "Karnataka",
+                      "addressL1": "Flat 402, Green Glen Layout, Bellandur"
+                    }
+                  }
+                },
+                "pocketLoan": {
+                  "summary": "Pocket Loan (ONLINE_SHORT_TERM)",
+                  "value": {
+                    "channel": "API_HEADLESS",
+                    "productCode": "ONLINE_SHORT_TERM",
+                    "mobile": "9876543210",
+                    "loanAmount": 25000,
+                    "customer": {
+                      "fullName": "Ananya Verma",
+                      "pan": "BCDEF2345G",
+                      "dob": "1997-09-20",
+                      "gender": "FEMALE",
+                      "employmentType": "salaried",
+                      "monthlyIncome": 35000,
+                      "pinCode": "110001",
+                      "city": "New Delhi",
+                      "state": "Delhi",
+                      "addressL1": "Connaught Place"
+                    }
+                  }
+                },
+                "businessLoan": {
+                  "summary": "Business Loan (ONLINE_BUSINESS)",
+                  "value": {
+                    "channel": "API_HEADLESS",
+                    "productCode": "ONLINE_BUSINESS",
+                    "mobile": "9876543210",
+                    "loanAmount": 1000000,
+                    "customer": {
+                      "fullName": "Vikram Patel",
+                      "companyName": "Patel Industrial Solutions Pvt Ltd",
+                      "pan": "ABCDE5678G",
+                      "dob": "1985-08-22",
+                      "gender": "MALE",
+                      "employmentType": "selfEmployed",
+                      "annualIncome": 4800000,
+                      "udyamNumber": "UDYAM-KR-03-0123456",
+                      "pinCode": "400051",
+                      "city": "Mumbai",
+                      "state": "Maharashtra",
+                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex"
+                    }
+                  }
+                },
+                "goldLoan": {
+                  "summary": "Gold Loan (ONLINE_GOLD)",
+                  "value": {
+                    "channel": "API_HEADLESS",
+                    "productCode": "ONLINE_GOLD",
+                    "mobile": "9876543210",
+                    "loanAmount": 200000,
+                    "customer": {
+                      "fullName": "Sunita Verma",
+                      "pan": "FGHIJ5678K",
+                      "dob": "1988-04-10",
+                      "gender": "FEMALE",
+                      "employmentType": "selfEmployed",
+                      "monthlyIncome": 40000,
+                      "pinCode": "110024",
+                      "city": "New Delhi",
+                      "state": "Delhi",
+                      "addressL1": "A-45, Lajpat Nagar 4"
+                    },
+                    "goldLoanDetails": {
+                      "jewellaryList": [
+                        "Gold Bangle 22K (2 Pcs)",
+                        "Gold Chain 22K (1 Pc)"
+                      ],
+                      "grams": "42.5"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Headless journey initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeadlessInitiateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partner/journey/{journeyId}": {
+      "get": {
+        "tags": [
+          "Headless Journey"
+        ],
+        "summary": "Step 2 - Get Journey State",
+        "operationId": "getHeadlessJourneyState",
+        "description": "Polls the mirrored journey state, lender offers, and nextAction for a headless journey session.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "X-Journey-Session",
+            "in": "header",
+            "required": true,
+            "description": "Journey session token returned by Step 1 (Initiate Headless Journey).",
+            "schema": {
+              "type": "string",
+              "example": "jsess_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+          },
+          {
+            "name": "journeyId",
+            "in": "path",
+            "required": true,
+            "description": "Journey ID returned by initiate",
+            "schema": {
+              "type": "string",
+              "example": "jrn_67a12b3c4d5e6f7a"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Journey state retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partner/journey/{journeyId}/action": {
+      "post": {
+        "tags": [
+          "Headless Journey"
+        ],
+        "summary": "Step 3 - Submit Customer Action",
+        "operationId": "submitHeadlessCustomerAction",
+        "description": "Submits borrower selections such as SELECT_OFFER, SELECT_GOLD_LOAN_BRANCH, or SUBMIT_BANK_ACCOUNT.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "X-Journey-Session",
+            "in": "header",
+            "required": true,
+            "description": "Journey session token returned by Step 1 (Initiate Headless Journey).",
+            "schema": {
+              "type": "string",
+              "example": "jsess_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+          },
+          {
+            "name": "journeyId",
+            "in": "path",
+            "required": true,
+            "description": "Journey ID returned by initiate",
+            "schema": {
+              "type": "string",
+              "example": "jrn_67a12b3c4d5e6f7a"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyActionRequest"
+              },
+              "examples": {
+                "selectOffer": {
+                  "summary": "Select Lender Offer",
+                  "value": {
+                    "kind": "SELECT_OFFER",
+                    "payload": {
+                      "offerId": "off_apollo_101",
+                      "loanAmount": 150000
+                    }
+                  }
+                },
+                "submitBank": {
+                  "summary": "Submit Bank Account",
+                  "value": {
+                    "kind": "SUBMIT_BANK_ACCOUNT",
+                    "payload": {
+                      "accHolderName": "Rahul Sharma",
+                      "acctype": "SAVING",
+                      "accNo": "1234567890",
+                      "ifscCode": "HDFC0001234"
+                    }
+                  }
+                },
+                "selectBranch": {
+                  "summary": "Select Gold Loan Branch",
+                  "value": {
+                    "kind": "SELECT_GOLD_LOAN_BRANCH",
+                    "payload": {
+                      "branchId": "branch_delhi_south_12"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action processed successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -1410,7 +1850,7 @@
             }
           },
           "400": {
-            "description": "Invalid action kind.",
+            "description": "Bad Request - Validation or payload failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1420,7 +1860,7 @@
             }
           },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1430,7 +1870,7 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -1440,17 +1880,7 @@
             }
           },
           "404": {
-            "description": "Resource not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Journey state conflict (version mismatch).",
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1460,7 +1890,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -1469,141 +1899,79 @@
               }
             }
           }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JourneyActionRequest"
-              }
-            }
-          }
-        },
-        "tags": [
-          "Loan Journey"
-        ]
+        }
       }
     },
     "/api/v1/partner/journey/{journeyId}/redirect-returned": {
       "post": {
-        "summary": "Signal Redirect Returned",
-        "security": [
-          {
-            "bearerAuth": [
-              "offers:select"
-            ]
-          }
+        "tags": [
+          "Headless Journey"
         ],
+        "summary": "Step 4 - Signal Redirect Returned",
+        "operationId": "signalHeadlessRedirectReturned",
+        "description": "Signals that the customer has returned from a third-party hosted redirect step (KYC, e-NACH Mandate, or e-Sign).",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "X-Journey-Session",
+            "in": "header",
+            "required": true,
+            "description": "Journey session token returned by Step 1 (Initiate Headless Journey).",
+            "schema": {
+              "type": "string",
+              "example": "jsess_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
             }
           },
           {
             "name": "journeyId",
             "in": "path",
             "required": true,
+            "description": "Journey ID returned by initiate",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "jrn_67a12b3c4d5e6f7a"
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JourneyRedirectReturnedResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing or invalid kind (must be KYC, MANDATE, or ESIGN).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but missing the required scope / product access.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Journey is not at the expected REDIRECT_TO_<kind> step.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
         "requestBody": {
           "required": true,
           "content": {
@@ -1614,71 +1982,29 @@
             }
           }
         },
-        "tags": [
-          "Loan Journey"
-        ]
-      }
-    },
-    "/api/v1/partner/journey/{journeyId}": {
-      "get": {
-        "summary": "Get Journey State",
-        "security": [
-          {
-            "bearerAuth": [
-              "leads:status:read"
-            ]
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Signature",
-            "in": "header",
-            "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Timestamp",
-            "in": "header",
-            "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "X-Nonce",
-            "in": "header",
-            "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "journeyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Signal acknowledged",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JourneyStateResponse"
+                  "$ref": "#/components/schemas/JourneyRedirectReturnedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
           },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1688,7 +2014,7 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -1698,7 +2024,7 @@
             }
           },
           "404": {
-            "description": "Resource not found.",
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1708,7 +2034,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -1717,54 +2043,446 @@
               }
             }
           }
-        },
-        "tags": [
-          "Loan Journey"
-        ]
+        }
       }
     },
-    "/api/v1/partner/webhooks": {
+    "/v1/partner/leads/{applicationId}/status": {
       "get": {
-        "summary": "List Webhook Subscriptions",
-        "security": [
-          {
-            "bearerAuth": [
-              "webhooks:manage"
-            ]
-          }
+        "tags": [
+          "Headless Journey"
         ],
+        "summary": "Step 5 - Get Final Status",
+        "operationId": "getHeadlessFinalStatus",
+        "description": "Query the final status of the completed headless application.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "description": "Application ID",
+            "schema": {
+              "type": "string",
+              "example": "app_67a12b3c4d5e6f7a"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Final application status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partner/leads": {
+      "get": {
+        "tags": [
+          "Tracking and Leads"
+        ],
+        "summary": "List Applications",
+        "operationId": "listPartnerApplications",
+        "description": "Returns a paginated list of all loan applications originated by this partner. Contains safe metadata only.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default 1)",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size (default 20, maximum 100)",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "example": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated applications list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partner/leads/{applicationId}/status": {
+      "get": {
+        "tags": [
+          "Tracking and Leads"
+        ],
+        "summary": "Get Application Status",
+        "operationId": "getTrackingApplicationStatus",
+        "description": "Query the real-time status of a specific loan application originated by this partner.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "description": "Application ID",
+            "schema": {
+              "type": "string",
+              "example": "app_67a12b3c4d5e6f7a"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partner/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List Webhooks",
+        "operationId": "listWebhooks",
+        "description": "Lists all registered webhook endpoints for this partner account (secrets omitted).",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+            "schema": {
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+            "schema": {
+              "type": "string",
+              "example": "1759820800"
+            }
+          },
+          {
+            "name": "x-nonce",
+            "in": "header",
+            "required": true,
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
+            "schema": {
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active webhooks",
             "content": {
               "application/json": {
                 "schema": {
@@ -1773,8 +2491,18 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1784,7 +2512,17 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1794,7 +2532,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -1803,101 +2541,57 @@
               }
             }
           }
-        },
-        "tags": [
-          "Webhooks"
-        ]
+        }
       },
       "post": {
-        "summary": "Register Webhook",
-        "security": [
-          {
-            "bearerAuth": [
-              "webhooks:manage"
-            ]
-          }
+        "tags": [
+          "Webhooks"
         ],
+        "summary": "Register Webhook",
+        "operationId": "registerWebhook",
+        "description": "Registers a new webhook subscription. The HMAC signing secret is returned ONCE only in this response.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebhookCreateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid url (non-https / private host) or event types, or per-partner limit reached.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but missing the required scope / product access.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
         "requestBody": {
           "required": true,
           "content": {
@@ -1908,61 +2602,133 @@
             }
           }
         },
-        "tags": [
-          "Webhooks"
-        ]
+        "responses": {
+          "201": {
+            "description": "Webhook registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource or application does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/partner/webhooks/{subscriptionId}/rotate-secret": {
       "post": {
-        "summary": "Rotate Webhook Secret",
-        "security": [
-          {
-            "bearerAuth": [
-              "webhooks:manage"
-            ]
-          }
+        "tags": [
+          "Webhooks"
         ],
+        "summary": "Rotate Webhook Secret",
+        "operationId": "rotateWebhookSecret",
+        "description": "Rotates the HMAC signing secret for a webhook. Returns the new secret ONCE only.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           },
           {
             "name": "subscriptionId",
             "in": "path",
             "required": true,
+            "description": "Subscription ID",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "65b9e812f1a23b4c5d6e7f8a"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Secret rotated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -1971,8 +2737,18 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -1982,7 +2758,7 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -1992,7 +2768,7 @@
             }
           },
           "404": {
-            "description": "Resource not found.",
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -2002,7 +2778,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -2011,62 +2787,72 @@
               }
             }
           }
-        },
-        "tags": [
-          "Webhooks"
-        ]
+        }
       }
     },
     "/api/v1/partner/webhooks/{subscriptionId}": {
       "delete": {
-        "summary": "Delete Webhook Subscription",
-        "security": [
-          {
-            "bearerAuth": [
-              "webhooks:manage"
-            ]
-          }
+        "tags": [
+          "Webhooks"
         ],
+        "summary": "Delete Webhook",
+        "operationId": "deleteWebhook",
+        "description": "Deletes a registered webhook subscription.",
         "parameters": [
           {
-            "name": "X-Signature",
+            "name": "x-api-key",
             "in": "header",
             "required": true,
-            "description": "HMAC-SHA256 signature over method, path, timestamp, nonce and raw body.",
+            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "ec_live_abc123_xyz789"
             }
           },
           {
-            "name": "X-Timestamp",
+            "name": "x-timestamp",
             "in": "header",
             "required": true,
-            "description": "Unix epoch seconds. Requests outside the tolerance window are rejected.",
+            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "1759820800"
             }
           },
           {
-            "name": "X-Nonce",
+            "name": "x-nonce",
             "in": "header",
             "required": true,
-            "description": "Unique per-request nonce. Replays are rejected.",
+            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
             }
           },
           {
             "name": "subscriptionId",
             "in": "path",
             "required": true,
+            "description": "Subscription ID",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "65b9e812f1a23b4c5d6e7f8a"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Webhook deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -2075,8 +2861,18 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request - Validation or payload failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication failed (missing/invalid key, signature, or replayed nonce).",
+            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
             "content": {
               "application/json": {
                 "schema": {
@@ -2086,7 +2882,7 @@
             }
           },
           "403": {
-            "description": "Authenticated but missing the required scope / product access.",
+            "description": "Forbidden - Insufficient permissions or unassigned product scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -2096,7 +2892,7 @@
             }
           },
           "404": {
-            "description": "Resource not found.",
+            "description": "Not Found - The requested resource or application does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -2106,7 +2902,7 @@
             }
           },
           "429": {
-            "description": "Rate limit exceeded.",
+            "description": "Rate Limit Exceeded - Too many requests in short interval",
             "content": {
               "application/json": {
                 "schema": {
@@ -2115,29 +2911,8 @@
               }
             }
           }
-        },
-        "tags": [
-          "Webhooks"
-        ]
+        }
       }
     }
-  },
-  "tags": [
-    {
-      "name": "Loan Journey",
-      "description": "Initiate and manage hosted or headless loan journeys"
-    },
-    {
-      "name": "Product Access",
-      "description": "Discover and query eligible loan products"
-    },
-    {
-      "name": "Tracking & Leads",
-      "description": "Track applications and query lead status"
-    },
-    {
-      "name": "Webhooks",
-      "description": "Register, list, and manage webhook subscriptions"
-    }
-  ]
+  }
 }
