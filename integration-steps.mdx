@@ -290,14 +290,13 @@ When credit evaluations are completed or when alternative options exist, EASYCRE
 
 ## Step 2 (Option B): Hosted Journey Tracking
 
-When using `API_HOSTED`, EASYCRED manages the entire borrower experience. Your backend does not make step-by-step action calls.
+When using `API_HOSTED`, EASYCRED manages the entire borrower experience on hosted web screens. Your backend does not make step-by-step action or poll calls.
 
 Track journey progress using either method:
-1. **Poll Application Status:**
-   ```http
-   GET {baseURL}/api/v1/partner/leads/{applicationId}/status
-   ```
-2. **Webhooks:** Configure a webhook endpoint to receive real-time HTTP POST notifications on all state transitions (see [Webhooks Guide](/webhooks)).
+1. **Webhooks (Recommended):** Configure an HTTPS endpoint via `POST /api/v1/partner/webhooks`. EASYCRED automatically sends signed real-time events (`journey.updated`, `journey.completed`, `journey.rejected`, `journey.failed`) carrying `data.journeyId` as the applicant progresses through hosted screens. See the [Webhooks Guide](/webhooks).
+2. **List & Poll Applications:** Retrieve all applications originated by your account via `GET /api/v1/partner/leads?page=1&limit=20` to obtain `applicationId`, or check status via `GET /api/v1/partner/leads/{applicationId}/status`.
+
+> **Note on `GET /journey/{journeyId}`:** The state endpoint `GET /journey/{journeyId}` is strictly an in-flight driver for **Headless** journeys and requires an `X-Journey-Session` token. It is neither required nor used in Hosted integrations.
 
 ---
 

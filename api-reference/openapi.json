@@ -1053,7 +1053,7 @@
         ],
         "summary": "Step 1 - Initiate Hosted Journey",
         "operationId": "initiateHostedJourney",
-        "description": "Starts a hosted loan journey (channel: API_HOSTED) and returns a single-use hostedUrl to redirect the applicant to EASYCRED web screens.",
+        "description": "Starts an EASYCRED-hosted loan journey (channel: API_HOSTED) and returns a single-use hostedUrl. Redirect the applicant to hostedUrl or embed it in a secure WebView. EASYCRED manages the borrower through all intermediate screens. Track journey events in real-time via Webhooks or inspect originated leads via GET /api/v1/partner/leads.",
         "parameters": [
           {
             "name": "x-api-key",
@@ -1220,130 +1220,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HostedInitiateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Validation or payload failure",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions or unassigned product scope",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - The requested resource or application does not exist",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate Limit Exceeded - Too many requests in short interval",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/partner/journey/{journeyId}": {
-      "get": {
-        "tags": [
-          "Hosted Journey"
-        ],
-        "summary": "Step 2 - Check Journey Status",
-        "operationId": "checkHostedJourneyStatus",
-        "description": "Check the real-time status and outcome of the hosted loan journey using the journeyId.",
-        "parameters": [
-          {
-            "name": "x-api-key",
-            "in": "header",
-            "required": true,
-            "description": "Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
-            "schema": {
-              "type": "string",
-              "example": "ec_live_abc123_xyz789"
-            }
-          },
-          {
-            "name": "x-timestamp",
-            "in": "header",
-            "required": true,
-            "description": "Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
-            "schema": {
-              "type": "string",
-              "example": "1759820800"
-            }
-          },
-          {
-            "name": "x-nonce",
-            "in": "header",
-            "required": true,
-            "description": "Unique UUID v4 nonce per request to prevent replay attacks.",
-            "schema": {
-              "type": "string",
-              "example": "d3b07384-d113-4ec4-9d45-2f928e123456"
-            }
-          },
-          {
-            "name": "x-signature",
-            "in": "header",
-            "required": true,
-            "description": "HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
-            "schema": {
-              "type": "string",
-              "example": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0"
-            }
-          },
-          {
-            "name": "journeyId",
-            "in": "path",
-            "required": true,
-            "description": "Journey ID returned by initiate",
-            "schema": {
-              "type": "string",
-              "example": "jrn_67a12b3c4d5e6f7a"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Journey status and outcome",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JourneyStateResponse"
                 }
               }
             }

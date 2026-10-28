@@ -1,156 +1,341 @@
 ---
 title: "Webhooks"
-description: "Subscribe to real-time HTTP POST events from EASYCRED when lead statuses change."
+description: "Subscribe to real-time HTTP POST events from EASYCRED when journey and lead statuses change."
 sidebarTitle: "Webhooks"
 ---
 
 ## Overview
 
-Partners can receive **live HTTP POST events** when lead statuses change on the EASYCRED system. This eliminates the need to poll for status updates — instead, EASYCRED pushes events directly to your server when something happens.
+EASYCRED Webhooks deliver **live HTTP POST event notifications** directly to your backend server whenever a customer's loan journey transitions through its lifecycle.
 
-**Required scope:** `webhooks:manage`
+### Who Are Webhooks For?
+
+Webhooks are supported and active for **both Hosted (`API_HOSTED`) and Headless (`API_HEADLESS`)** integrations:
+
+- **Hosted Integrations (`API_HOSTED`):** Webhooks are the **primary recommended tracking mechanism**. Because the customer completes all intermediary steps (offer selection, KYC verification, mandate setup, and e-signing) on EASYCRED's hosted screens, webhooks notify your server in real-time as each milestone occurs and when the final sanction/disbursal is achieved—eliminating continuous polling.
+- **Headless Integrations (`API_HEADLESS`):** In addition to active in-flight polling via `GET /v1/partner/journey/{journeyId}`, webhooks serve as asynchronous alerts for milestone transitions and terminal states (`journey.completed`, `journey.rejected`, `journey.failed`).
+
+**Required Scope:** `webhooks:manage`  
+**Authentication:** Standard HMAC headers (`x-api-key`, `x-signature`, `x-timestamp`, `x-nonce`) are required for all webhook management endpoints.
 
 ---
 
-## Webhook Management
+## Webhook Management Endpoints
 
-### Register a Webhook
+### 1. Register a Webhook Subscription
+
+Register an HTTPS endpoint to receive webhook notifications for specified events:
 
 ```http
 POST /api/v1/partner/webhooks
 ```
 
-**Request body:**
+**Request Body:**
 
 ```json
 {
-  "url": "https://yourserver.com/callback",
+  "url": "https://yourserver.com/api/easycred/webhook",
   "events": [
     "journey.initiated",
-    "journey.completed"
+    "journey.updated",
+    "journey.completed",
+    "journey.rejected",
+    "journey.failed"
   ]
 }
 ```
 
-**Response:** Returns the subscription details including a **Webhook Signing Secret** (returned **once only** — store it immediately).
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `url` | string | Yes | Public HTTPS URL on your server (max 2048 chars). Private/localhost IP ranges are prohibited. |
+| `events` | string[] | Yes | Array of events to subscribe to. Must be valid `journey.*` event types. |
+
+**Response (HTTP 201 Created):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "subscriptionId": "sub_4f89b21a-310e-47f2-8921-9e7631890123",
+    "secret": "whsec_a8b9c0d1e2f34567890abcdef1234567890abcdef1234567890abcdef1234567"
+  }
+}
+```
+
+<Warning>
+  **Store the Webhook Signing Secret Immediately:** The `secret` is returned **once only** upon creation. It is never returned again on list or inspect endpoints. You need this secret to verify signatures of incoming webhook calls.
+</Warning>
 
 ---
 
-### List Webhooks
+### 2. List Webhook Subscriptions
+
+Retrieve all active webhook subscriptions for your partner account:
 
 ```http
 GET /api/v1/partner/webhooks
 ```
 
-Returns all active webhook subscriptions. Signing secrets are **never returned** after initial registration.
+**Response (HTTP 200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "subscriptions": [
+      {
+        "subscriptionId": "sub_4f89b21a-310e-47f2-8921-9e7631890123",
+        "url": "https://yourserver.com/api/easycred/webhook",
+        "subscribedEvents": [
+          "journey.initiated",
+          "journey.updated",
+          "journey.completed",
+          "journey.rejected",
+          "journey.failed"
+        ],
+        "isActive": true,
+        "failureCount": 0,
+        "lastDeliveryAt": "2026-10-28T08:30:00.000Z"
+      }
+    ]
+  }
+}
+```
 
 ---
 
-### Rotate Webhook Signing Secret
+### 3. Rotate Webhook Signing Secret
+
+Issue a new HMAC signing secret for a subscription. Use this to rotate secrets periodically or if a secret has been compromised:
 
 ```http
 POST /api/v1/partner/webhooks/{subscriptionId}/rotate-secret
 ```
 
-Issues a new HMAC signing secret for the specified webhook. The new secret is returned **once** in the response. Update your server-side verification logic immediately.
+**Response (HTTP 200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "subscriptionId": "sub_4f89b21a-310e-47f2-8921-9e7631890123",
+    "secret": "whsec_b9c0d1e2f34567890abcdef1234567890abcdef1234567890abcdef12345678"
+  }
+}
+```
 
 ---
 
-### Delete a Webhook
+### 4. Delete a Webhook Subscription
+
+Permanently deactivate and delete a webhook subscription:
 
 ```http
 DELETE /api/v1/partner/webhooks/{subscriptionId}
 ```
 
-Permanently removes the webhook subscription. EASYCRED will stop sending events to that URL.
+**Response (HTTP 200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true
+  }
+}
+```
 
 ---
 
-## Webhook Events
+## Supported Webhook Events
 
-| Event | Triggered When |
-| --- | --- |
-| `journey.initiated` | A loan journey has been started |
-| `journey.offers_received` | Lender offers are available for selection |
-| `journey.offer_selected` | An offer has been selected by the partner |
-| `journey.kyc_done` | Customer KYC verification completed |
-| `journey.enach_done` | eNACH mandate authorized |
-| `journey.esign_done` | Loan agreement eSigned |
-| `journey.completed` | Loan disbursed — journey in `SANCTIONED` state |
-| `journey.rejected` | Lender declined the application |
-| `journey.abandoned` | Journey inactive for 7\+ days |
+The EASYCRED journey engine emits five canonical event types:
+
+| Event Name | Triggered When | Associated Outcome |
+| :--- | :--- | :--- |
+| `journey.initiated` | A loan journey is started via API (`POST /journey/initiate`). | `null` |
+| `journey.updated` | Customer transitions through an intermediate step (e.g. offers retrieved, offer selected, bank account submitted, KYC/eNACH/eSign redirect returned). | `null` |
+| `journey.completed` | Loan is sanctioned and successfully disbursed to the borrower. | `"COMPLETED"` |
+| `journey.rejected` | Lender declined the application, or no lending offers were available for the applicant's profile. | `"REJECTED"` or `"NO_OFFERS_AVAILABLE"` |
+| `journey.failed` | Journey reached terminal failure: routed to offline manual processing, borrower timed out, or journey expired (72-hour TTL). | `"OFFLINE_PROCESSING"`, `"ABANDONED"`, or `"EXPIRED"` |
 
 ---
 
-## Verifying Incoming Webhooks
+## Webhook Payload Format
 
-EASYCRED signs every webhook payload sent to your endpoint. **Always verify the signature** before processing the event to ensure it genuinely came from EASYCRED.
+EASYCRED sends HTTP `POST` requests with `Content-Type: application/json` containing the following structure:
 
-<Steps>
-  <Step title="Read the Signature Header">
-    Every incoming webhook POST includes an `x-easycred-signature` header containing the HMAC-SHA256 signature.
-  </Step>
-  <Step title="Compute the Expected Signature">
-    Using your **Webhook Signing Secret**, compute the HMAC-SHA256 over the **raw JSON request body** (not parsed — the exact bytes received).
+```json
+{
+  "id": "evt_7a8b9c0d-1e2f-3456-7890-abcdef123456",
+  "type": "journey.updated",
+  "createdAt": "2026-10-28T08:30:00.000Z",
+  "data": {
+    "journeyId": "jrn_719b9dfa-741b-4c27-8a87-e0ab7f166520",
+    "productCode": "ONLINE_PERSONAL",
+    "channel": "API_HOSTED",
+    "nextActionType": "WAIT_FOR_OFFERS",
+    "nextActionCategory": "POLL",
+    "outcome": null
+  }
+}
+```
 
-    ```typescript
-    import { createHmac } from 'crypto';
-    
-    function verifyWebhook(
-      rawBody: string,        // exact raw body string
-      receivedSig: string,    // from x-easycred-signature header
-      webhookSecret: string,  // your webhook signing secret
-    ): boolean {
-      const expected = createHmac('sha256', webhookSecret)
-        .update(rawBody)
-        .digest('hex');
-      return expected === receivedSig;
-    }
-    ```
-  </Step>
-  <Step title="Compare Signatures">
-    If the computed signature matches the header value, the event is **authentic** and safe to process.
+### Payload Fields
 
-    If they don't match, reject the request with `400 Bad Request` — it may be tampered or spoofed.
-  </Step>
-  <Step title="Respond with 200 Quickly">
-    Return an HTTP `200` response **within 5 seconds**. If your processing takes longer, acknowledge immediately and handle the event asynchronously.
-  </Step>
-</Steps>
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | string | Unique event ID (`evt_<uuid>`) for idempotency tracking. |
+| `type` | string | Event type name (e.g. `journey.updated`, `journey.completed`). |
+| `createdAt` | string | ISO 8601 UTC timestamp when the event was generated. |
+| `data.journeyId` | string | The EASYCRED journey identifier (`jrn_<uuid>`) returned at initiation. |
+| `data.productCode` | string | Loan product code (`ONLINE_PERSONAL`, `ONLINE_SHORT_TERM`, `ONLINE_BUSINESS`, `ONLINE_GOLD`). |
+| `data.channel` | string | Journey channel (`"API_HOSTED"` or `"API_HEADLESS"`). |
+| `data.nextActionType` | string | Current state/action name (e.g. `OFFER_SELECTION`, `DISBURSED`, `REJECTED`). |
+| `data.nextActionCategory` | string | Category: `POLL`, `COLLECT`, `REDIRECT`, or `TERMINAL`. |
+| `data.outcome` | string \| null | Terminal outcome string (`COMPLETED`, `REJECTED`, `NO_OFFERS_AVAILABLE`, etc.) or `null` if active. |
+
+---
+
+## Verifying Incoming Webhook Signatures
+
+To ensure incoming requests genuinely originate from EASYCRED and have not been tampered with or replayed, EASYCRED signs every webhook payload.
+
+### HTTP Headers Sent by EASYCRED
+
+| Header | Description |
+| :--- | :--- |
+| `x-webhook-signature` | Hex HMAC-SHA256 signature calculated over the canonical signing string. |
+| `x-webhook-timestamp` | Unix epoch seconds (e.g. `"1759820800"`). |
+| `x-webhook-nonce` | Unique 32-character hex nonce per delivery. |
+
+### Canonical Signing String Format (v0)
+
+EASYCRED uses length-prefixed canonical strings to prevent field injection:
+
+$$\text{signingString} = \text{"v0:"} + \text{len(ts)} + \text{":"} + \text{ts} + \text{":"} + \text{len(nonce)} + \text{":"} + \text{nonce} + \text{":"} + \text{rawBody}$$
+
+Example signing string:
+```text
+v0:10:1759820800:32:d3b07384d1134ec49d452f928e123456:{"id":"evt_...","type":"journey.completed",...}
+```
+
+### Verification Implementation (TypeScript / Node.js)
+
+```typescript
+import { createHmac, timingSafeEqual } from 'crypto';
+
+interface VerifyWebhookParams {
+  rawBody: string;            // Exact raw request body string (do NOT parse before verifying)
+  receivedSignature: string;  // Value from 'x-webhook-signature' header
+  timestamp: string;          // Value from 'x-webhook-timestamp' header
+  nonce: string;              // Value from 'x-webhook-nonce' header
+  webhookSecret: string;      // Your stored Webhook Signing Secret (whsec_...)
+  toleranceSeconds?: number;  // Allowed timestamp drift (default: 300 seconds)
+}
+
+export function verifyEASYCREDWebhook({
+  rawBody,
+  receivedSignature,
+  timestamp,
+  nonce,
+  webhookSecret,
+  toleranceSeconds = 300,
+}: VerifyWebhookParams): boolean {
+  if (!rawBody || !receivedSignature || !timestamp || !nonce || !webhookSecret) {
+    return false;
+  }
+
+  // 1. Verify timestamp freshness (prevents replay attacks)
+  const ts = Number(timestamp);
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(ts) || Math.abs(now - ts) > toleranceSeconds) {
+    return false;
+  }
+
+  // 2. Build canonical length-prefixed signing string
+  const signingString = `v0:${timestamp.length}:${timestamp}:${nonce.length}:${nonce}:${rawBody}`;
+
+  // 3. Compute expected HMAC-SHA256 signature
+  const expectedSignature = createHmac('sha256', webhookSecret)
+    .update(signingString)
+    .digest('hex');
+
+  // 4. Timing-safe comparison to prevent timing attacks
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+  const receivedBuffer = Buffer.from(receivedSignature, 'hex');
+
+  if (expectedBuffer.length !== receivedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+```
+
+### Verification Implementation (Python)
+
+```python
+import hmac
+import hashlib
+import time
+
+def verify_easycred_webhook(
+    raw_body: str,
+    received_signature: str,
+    timestamp: str,
+    nonce: str,
+    webhook_secret: str,
+    tolerance_seconds: int = 300
+) -> bool:
+    if not all([raw_body, received_signature, timestamp, nonce, webhook_secret]):
+        return False
+
+    # 1. Check timestamp freshness
+    try:
+        ts = int(timestamp)
+    except ValueError:
+        return False
+
+    if abs(int(time.time()) - ts) > tolerance_seconds:
+        return False
+
+    # 2. Build canonical signing string
+    signing_string = f"v0:{len(timestamp)}:{timestamp}:{len(nonce)}:{nonce}:{raw_body}"
+
+    # 3. Compute expected HMAC-SHA256
+    expected_signature = hmac.new(
+        webhook_secret.encode('utf-8'),
+        signing_string.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    # 4. Constant-time comparison
+    return hmac.compare_digest(expected_signature, received_signature)
+```
 
 <Warning>
-  **Always use the raw body bytes** for signature verification — not the parsed JSON object. Parsers may reformat whitespace or key ordering, causing the signature to not match.
+  **CRITICAL — Raw Body Bytes:** Always calculate the signature over the raw unparsed JSON string bytes directly from the HTTP request stream. Never re-serialize a parsed JSON object with `JSON.stringify()`, as key ordering and whitespace differences will invalidate the signature.
 </Warning>
 
 ---
 
-## Webhook Reliability
+## Delivery Guarantees & Best Practices
 
 <AccordionGroup>
-  <Accordion title="Retry Policy" icon="rotate-cw">
-    If your endpoint returns a non-`2xx` response or times out, EASYCRED will retry delivery using exponential backoff. Ensure your endpoint is idempotent — the same event may be delivered more than once.
+  <Accordion title="Idempotency" icon="shield-check">
+    Store the incoming `id` (e.g. `evt_...`) in your database. If EASYCRED retries delivery of an already processed event ID, return `200 OK` immediately without re-executing business logic.
   </Accordion>
 
-  <Accordion title="Event Ordering" icon="list-ordered">
-    Events are delivered in order on a best-effort basis. For critical state management, always reconcile against the current journey state via `GET /journey/{journeyId}`.
+  <Accordion title="5-Second Response Timeout" icon="stopwatch">
+    Your webhook endpoint must return an HTTP `2xx` response within **5 seconds**. If your downstream processing takes longer, acknowledge the event immediately with `200 OK` and process the event asynchronously on a background worker or job queue.
   </Accordion>
 
-  <Accordion title="Idempotency" icon="shield">
-    Each webhook delivery includes a unique event ID. Store processed event IDs to avoid double-processing retries.
+  <Accordion title="Automatic Retries with Exponential Backoff" icon="rotate-cw">
+    If your endpoint returns an HTTP status outside `200-299` or times out, EASYCRED enqueues automatic retries with exponential backoff.
+  </Accordion>
+
+  <Accordion title="State Reconciliation" icon="database">
+    For audit or end-of-day reconciliation, query your list of originated applications via `GET /api/v1/partner/leads` or query individual status via `GET /api/v1/partner/leads/{applicationId}/status`.
   </Accordion>
 </AccordionGroup>
-
----
-
-## Webhooks vs. Polling
-
-|  | Webhooks | Polling |
-| --- | --- | --- |
-| **Latency** | Near real-time | Depends on poll interval |
-| **API Calls** | Minimal (only management calls) | Many (GET every N seconds) |
-| **Reliability** | Requires public HTTPS endpoint | Works anywhere |
-| **Best For** | Production integrations | Development & testing |
-
-<Tip>
-  Use **webhooks in production** for real-time responsiveness. Use **polling during development** to avoid needing a public endpoint.
-</Tip>
