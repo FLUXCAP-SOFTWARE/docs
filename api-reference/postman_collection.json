@@ -1240,6 +1240,705 @@
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           }
+        },
+        {
+          "id": "d6acce7b-3908-4663-9cfc-d9b1f886e6a1",
+          "name": "Step 2 - Check Journey Status",
+          "request": {
+            "name": "Step 2 - Check Journey Status",
+            "description": {
+              "content": "Check the real-time status, active step, and terminal outcome of a hosted loan journey using the journeyId.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "partner",
+                "journey",
+                ":journeyId"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "type": "any",
+                  "value": "{{journeyId}}",
+                  "key": "journeyId",
+                  "disabled": false,
+                  "description": {
+                    "content": "(Required) Journey ID returned by initiate",
+                    "type": "text/plain"
+                  }
+                }
+              ]
+            },
+            "header": [
+              {
+                "disabled": false,
+                "description": {
+                  "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                  "type": "text/plain"
+                },
+                "key": "x-api-key",
+                "value": "<string>"
+              },
+              {
+                "disabled": false,
+                "description": {
+                  "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                  "type": "text/plain"
+                },
+                "key": "x-timestamp",
+                "value": "<string>"
+              },
+              {
+                "disabled": false,
+                "description": {
+                  "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                  "type": "text/plain"
+                },
+                "key": "x-nonce",
+                "value": "<string>"
+              },
+              {
+                "disabled": false,
+                "description": {
+                  "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                  "type": "text/plain"
+                },
+                "key": "x-signature",
+                "value": "<string>"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "body": {},
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "73a457ad-c708-411b-87f6-418817e917b4",
+              "name": "Journey state retrieved",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"data\": {\n    \"journeyId\": \"<string>\",\n    \"step\": \"<string>\",\n    \"nextAction\": {\n      \"type\": \"<string>\",\n      \"category\": \"<string>\"\n    },\n    \"offers\": [\n      {\n        \"offerId\": \"<string>\",\n        \"lenderName\": \"<string>\",\n        \"sanctionAmount\": \"<number>\",\n        \"roi\": \"<number>\",\n        \"tenureMonths\": \"<number>\",\n        \"emi\": \"<number>\"\n      },\n      {\n        \"offerId\": \"<string>\",\n        \"lenderName\": \"<string>\",\n        \"sanctionAmount\": \"<number>\",\n        \"roi\": \"<number>\",\n        \"tenureMonths\": \"<number>\",\n        \"emi\": \"<number>\"\n      }\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3b46d1d1-f59a-48bd-9f56-9600aa9f4a98",
+              "name": "Bad Request - Validation or payload failure",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e69bc2f7-706f-4041-83ad-6cbb845b64ed",
+              "name": "Unauthorized - Invalid API key, signature mismatch, or replayed nonce",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "de187c41-8363-4547-9f19-9378db1feb11",
+              "name": "Forbidden - Insufficient permissions or unassigned product scope",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "732ec70b-7a35-43fb-9b6e-0ae0fa22a2ac",
+              "name": "Not Found - The requested resource or application does not exist",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b77614a8-41a0-4f76-8d52-02e7d458dcd2",
+              "name": "Rate Limit Exceeded - Too many requests in short interval",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "partner",
+                    "journey",
+                    ":journeyId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) Journey ID returned by initiate",
+                        "type": "text/plain"
+                      },
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "journeyId"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Your active EASYCRED Partner API Key (format: ec_live_... or ec_test_...)",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unix epoch seconds. Requests outside the 5-minute tolerance window are rejected.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-timestamp",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Unique UUID v4 nonce per request to prevent replay attacks.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-nonce",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) HMAC-SHA256 signature calculated over method, path, timestamp, nonce, and raw request body.",
+                      "type": "text/plain"
+                    },
+                    "key": "x-signature",
+                    "value": "<string>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "(Required) Journey session token returned by Step 1 (Initiate Headless Journey).",
+                      "type": "text/plain"
+                    },
+                    "key": "X-Journey-Session",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "x-api-key",
+                    "value": "<API Key>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": \"<boolean>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
         }
       ]
     },

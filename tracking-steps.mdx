@@ -6,14 +6,14 @@ sidebarTitle: "Tracking Steps"
 
 ## Overview
 
-EASYCRED provides distinct tracking mechanisms tailored to whether you are running a **Hosted (`API_HOSTED`)** or **Headless (`API_HEADLESS`)** integration:
+EASYCRED provides flexible tracking mechanisms to monitor loan progress in real-time across both **Hosted (`API_HOSTED`)** and **Headless (`API_HEADLESS`)** journeys:
 
 | Tracking Method | Integration Mode | Endpoint / Mechanism | Required Headers | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Webhooks** | Hosted & Headless | HTTP POST to your server | `x-webhook-signature`, `x-webhook-timestamp`, `x-webhook-nonce` | **Primary for Hosted.** Real-time push events (`journey.updated`, `journey.completed`, etc.) matching `journeyId`. |
-| **List Applications** | Hosted & Headless | `GET /api/v1/partner/leads` | Standard HMAC headers | Paginated audit list of all applications originated by your partner account. |
-| **Application Status** | Hosted & Headless | `GET /api/v1/partner/leads/{applicationId}/status` | Standard HMAC headers | Query terminal or processing status using the 24-char hex `applicationId`. |
-| **In-Flight State Polling** | Headless Only | `GET /v1/partner/journey/{journeyId}` | Standard HMAC + `X-Journey-Session` | Real-time state machine driver returning lender offers, actions, and current step. |
+| **Check Journey Status** | Hosted & Headless | `GET /api/v1/partner/journey/{journeyId}` | Standard HMAC headers | Real-time journey state machine lookup. Returns current step, offers, and terminal outcome. |
+| **List Applications** | Hosted & Headless | `GET /api/v1/partner/leads` | Standard HMAC headers | Paginated audit list of all applications originated by your account with real-time status. |
+| **Application Status** | Hosted & Headless | `GET /api/v1/partner/leads/{applicationId}/status` | Standard HMAC headers | Direct status lookup using the 24-character hex `applicationId`. |
+| **Webhooks** | Hosted & Headless | HTTP POST to your server | `x-webhook-signature`, `x-webhook-timestamp`, `x-webhook-nonce` | Real-time push events (`journey.updated`, `journey.completed`, `journey.rejected`, `journey.failed`). |
 
 ---
 
@@ -21,49 +21,43 @@ EASYCRED provides distinct tracking mechanisms tailored to whether you are runni
 
 Understanding EASYCRED's tracking IDs ensures seamless reconciliation:
 
-- **`journeyId` (`jrn_<uuid>`):** Returned by `POST /journey/initiate` for both Hosted and Headless channels. It is the primary reference delivered in all **Webhook events** (`data.journeyId`), enabling your system to correlate real-time webhook updates directly with the initial initiation call.
-- **`applicationId` (24-character hex MongoDB ObjectId):** Generated when the loan application is recorded in EASYCRED's database. Returned in `GET /api/v1/partner/leads` and queried via `GET /api/v1/partner/leads/{applicationId}/status`.
+- **`journeyId` (`jrn_<uuid>`):** Returned by `POST /journey/initiate` for both Hosted and Headless channels. It is the primary identifier used for **Journey Status polling** (`GET /journey/{journeyId}`) and **Webhook notifications** (`data.journeyId`).
+- **`applicationId` (24-character hex MongoDB ObjectId):** Generated when the loan application is recorded in EASYCRED's database (e.g. `6ae1b47ce5656d0175f6596a`). Returned in `GET /api/v1/partner/leads` and queried via `GET /api/v1/partner/leads/{applicationId}/status`.
 - **Internal Reference IDs:** Internal banking rail or lender session IDs (such as 36-character UUID strings like `01a18...`) are managed privately by EASYCRED's infrastructure. API partners do not use these IDs; you always track externally using `journeyId` or `applicationId`.
 
 ---
 
-## 1. List Enabled Products
+## 1. Check Journey Status (`GET /journey/{journeyId}`)
 
-Inspect which loan products are currently enabled for your API key:
+Check the real-time state, lender offers, and outcome of a journey using its `journeyId`:
 
 ```http
-GET /api/v1/partner/products
+GET /api/v1/partner/journey/{journeyId}
 ```
 
-**Required Scope:** `products:read`  
-**Headers:** Standard HMAC headers (`x-api-key`, `x-timestamp`, `x-nonce`, `x-signature`)
+**Required Scope:** `leads:status:read`  
+**Headers:** Standard HMAC headers (`x-api-key`, `x-timestamp`, `x-nonce`, `x-signature`)  
+*(Works for both Hosted and Headless modes. No `X-Journey-Session` token is required).*
+
+### Response Example
 
 ```json
 {
   "success": true,
   "data": {
-    "products": [
-      {
-        "code": "ONLINE_PERSONAL",
-        "displayName": "Personal Loan",
-        "category": "PERSONAL"
-      },
-      {
-        "code": "ONLINE_SHORT_TERM",
-        "displayName": "Pocket Loan",
-        "category": "PERSONAL"
-      },
-      {
-        "code": "ONLINE_BUSINESS",
-        "displayName": "Business Loan",
-        "category": "BUSINESS"
-      },
-      {
-        "code": "ONLINE_GOLD",
-        "displayName": "Gold Loan",
-        "category": "GOLD"
-      }
-    ]
+    "journeyId": "jrn_d6a05d54-ae16-4dfb-9590-fa7baa332267",
+    "productCode": "ONLINE_PERSONAL",
+    "channel": "API_HOSTED",
+    "currentNextAction": {
+      "type": "NO_OFFERS_AVAILABLE",
+      "category": "TERMINAL",
+      "pollIntervalSeconds": null,
+      "url": null,
+      "endpoint": null
+    },
+    "offers": [],
+    "outcome": "NO_OFFERS_AVAILABLE",
+    "startedAt": "2026-10-28T08:38:20.450Z"
   }
 }
 ```
@@ -72,7 +66,7 @@ GET /api/v1/partner/products
 
 ## 2. List Partner Leads & Applications
 
-Retrieve a paginated list of all applications originated by your account. This endpoint returns operational metadata without exposing customer PII:
+Retrieve a paginated list of all applications originated by your account. This endpoint returns real-time operational status without exposing customer PII:
 
 ```http
 GET /api/v1/partner/leads?page=1&limit=20
@@ -96,14 +90,21 @@ GET /api/v1/partner/leads?page=1&limit=20
   "data": {
     "leads": [
       {
-        "applicationId": "667a1b3c4d5e6f7a8b9c0d1e",
+        "applicationId": "6ae1b47ce5656d0175f6596a",
         "loanType": "PERSONAL_LOAN",
         "loanAmount": 150000,
-        "status": "APPROVED",
-        "submittedAt": "2026-10-28T07:15:30.000Z"
+        "status": "POLL_FOR_OFFERS",
+        "submittedAt": "2026-10-28T08:38:20.450Z"
+      },
+      {
+        "applicationId": "6ae1aa0ee5656d0175f656f5",
+        "loanType": "PERSONAL_LOAN",
+        "loanAmount": 200000,
+        "status": "NO_OFFERS_AVAILABLE",
+        "submittedAt": "2026-10-28T07:53:50.842Z"
       }
     ],
-    "total": 1,
+    "total": 33,
     "page": 1,
     "limit": 20
   }
@@ -112,9 +113,9 @@ GET /api/v1/partner/leads?page=1&limit=20
 
 ---
 
-## 3. Get Application Status
+## 3. Get Application Status by `applicationId`
 
-Retrieve the current processing or terminal status of an application by its `applicationId`:
+Retrieve the current processing or terminal status of an individual application:
 
 ```http
 GET /api/v1/partner/leads/{applicationId}/status
@@ -122,7 +123,6 @@ GET /api/v1/partner/leads/{applicationId}/status
 
 **Required Scope:** `leads:status:read`  
 **Headers:** Standard HMAC headers  
-*(Requires only standard HMAC headers — no `X-Journey-Session` token needed. Compatible with both hosted and headless applications).*
 
 ### Response Example
 
@@ -130,32 +130,43 @@ GET /api/v1/partner/leads/{applicationId}/status
 {
   "success": true,
   "data": {
-    "applicationId": "667a1b3c4d5e6f7a8b9c0d1e",
-    "status": "COMPLETED"
+    "applicationId": "6ae1aa0ee5656d0175f656f5",
+    "status": "NO_OFFERS_AVAILABLE"
   }
 }
 ```
 
 ---
 
-## 4. Webhooks vs. Polling
+## Complete Status Reference
 
-EASYCRED supports asynchronous webhook delivery for status transitions:
+EASYCRED returns standardized status codes across the Leads API, Journey API, and Webhooks:
 
-- **Webhooks (Recommended for Hosted):** Receive instant HTTP POST push notifications on all state transitions (`journey.initiated`, `journey.updated`, `journey.completed`, `journey.rejected`, `journey.failed`). Webhook payloads include `data.journeyId` so your backend can update customer status in real-time while they use the hosted screens.
-- **In-Flight State Polling (Headless Only):** Poll `GET /v1/partner/journey/{journeyId}` using `X-Journey-Session` to drive intermediate UI screens (render offers, request bank details, handle redirects).
+### Terminal Outcomes (`data.outcome` / Terminal `status`)
 
-See the [Webhooks Guide](/webhooks) to configure endpoints and signature verification.
+When an application completes its lifecycle, it transitions into one of these terminal outcomes:
 
----
+| Status Code | Meaning | Description |
+| :--- | :--- | :--- |
+| `COMPLETED` | Loan Sanctioned & Disbursed | Loan funds have been successfully transferred to the borrower's verified bank account. |
+| `REJECTED` | Application Declined | Application did not meet lender credit underwriting criteria. |
+| `NO_OFFERS_AVAILABLE` | No Matching Offers | Credit profile evaluated, but no partner lenders returned viable credit offers for this applicant. |
+| `OFFLINE_PROCESSING` | Manual Officer Review | Application routed to an EASYCRED credit officer or branch manager for physical documentation. |
+| `ABANDONED` | Inactive Dropout | Borrower exited the journey and remained inactive for 7+ days. |
+| `EXPIRED` | Session Timeout | Application exceeded the 72-hour journey validity TTL. |
 
-## Terminal Status Reference
+### In-Flight Processing Statuses (`currentNextAction.type` / Active `status`)
 
-| Status | Description |
-| :--- | :--- |
-| `COMPLETED` | Loan successfully sanctioned and disbursed. |
-| `REJECTED` | Application did not meet lender credit criteria. |
-| `NO_OFFERS_AVAILABLE` | No offers returned for the applicant's profile. |
-| `OFFLINE_PROCESSING` | Assigned to an EASYCRED credit officer for physical follow-up. |
-| `ABANDONED` | Borrower timed out before completing verification. |
-| `EXPIRED` | Application exceeded the 72-hour journey TTL. |
+While an application is actively being processed:
+
+| Status Code | Current Phase | Next Step Required |
+| :--- | :--- | :--- |
+| `NEW` | Initiated | Application recorded, initial credit checks starting. |
+| `POLL_FOR_OFFERS` | Evaluating Lenders | Automated credit assessment underway across banking partners. |
+| `SELECT_OFFER` | Offers Ready | Approved credit offers are available for borrower selection. |
+| `SELECT_GOLD_LOAN_BRANCH` | Branch Appointment | Gold Loan branch location and appointment selection required. |
+| `SUBMIT_BANK_ACCOUNT` | Bank Details | Bank account number and IFSC required for disbursal penny drop. |
+| `REDIRECT_TO_KYC` | Identity Verification | Digital KYC verification in progress via DigiLocker / Aadhaar. |
+| `REDIRECT_TO_ENACH` | Repayment Mandate | Auto-debit eNACH mandate authorization in progress. |
+| `REDIRECT_TO_ESIGN` | Agreement Execution | Digital loan agreement execution in progress via Aadhaar eSign. |
+| `DISBURSED` | Disbursal Executed | Funds credited; pending final bank UTR reconciliation. |
