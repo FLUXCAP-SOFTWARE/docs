@@ -48,16 +48,56 @@ POST {baseURL}/v1/partner/journey/initiate
 
 | Field | Type | Required | Validation / Notes |
 | :--- | :--- | :--- | :--- |
+| `firstName` | string | Yes | Applicant first name (must match PAN) |
+| `lastName` | string | Yes | Applicant last name (must match PAN) |
 | `pan` | string | Yes | Standard 10-character PAN format (`ABCDE1234F`) |
-| `dob` | string | Yes | `YYYY-MM-DD` |
+| `dob` | string | Yes | Date of birth in `YYYY-MM-DD` format (e.g. `1992-06-15`) |
 | `gender` | string | Yes | `"MALE"`, `"FEMALE"`, or `"OTHER"` |
 | `personalEmail` | string | Yes | Valid email address |
 | `employmentType` | string | Yes | `"salaried"` or `"selfEmployed"` (Must be `"selfEmployed"` for Business Loans) |
-| `companyName` | string | Conditional | Required for `"ONLINE_BUSINESS"` (Registered trade or enterprise name) |
-| `pinCode` | string | Yes | 6-digit residential / operational PIN code |
-| `termsAccepted` | boolean | Yes | Must be `true` |
 | `monthlyIncome` / `annualIncome` | number | Yes | Provide `monthlyIncome` for personal/pocket loans; `annualIncome` for business loans |
-| `firstName`, `lastName` | string | No | Optional enrichment fields |
+| `pinCode` | string | Yes | 6-digit residential / operational PIN code |
+| `city` | string | Yes | City name (e.g. `"Bengaluru"`) |
+| `state` | string | Yes | State name (e.g. `"Karnataka"`) |
+| `addressL1` | string | Yes | Residential / operational address line 1 |
+| `addressL2` | string | No | Landmark or building name (optional) |
+| `companyName` | string | Conditional | Required for `"ONLINE_BUSINESS"` (Registered trade or enterprise name) |
+| `loanAmountRequired` | number | No | Desired initial loan amount (optional at initiation) |
+| `termsAccepted` | boolean | Yes | Must be `true` |
+
+> **Note on Loan Amount:** `loanAmount` is not mandatory at initiation. Borrowers are evaluated by lenders for their maximum eligible sanctioned credit limit. When selecting an offer (`SELECT_OFFER` in Headless or on the hosted UI), specifying the desired `loanAmount` within the approved range is mandatory.
+
+### Example cURL — Initiate Journey
+
+```bash
+curl --request POST \
+  --url https://dev.easycred.co.in/api/v1/partner/journey/initiate \
+  --header 'Content-Type: application/json' \
+  --header 'x-api-key: <api-key>' \
+  --header 'x-nonce: <unique-uuid>' \
+  --header 'x-signature: <computed-signature>' \
+  --header 'x-timestamp: <unix-timestamp>' \
+  --data '{
+    "channel": "API_HOSTED",
+    "productCode": "ONLINE_PERSONAL",
+    "mobile": "9876543210",
+    "customer": {
+      "firstName": "Rahul",
+      "lastName": "Sharma",
+      "pan": "ABCDE1234F",
+      "dob": "1992-06-15",
+      "gender": "MALE",
+      "employmentType": "salaried",
+      "monthlyIncome": 65000,
+      "personalEmail": "rahul.sharma@example.com",
+      "pinCode": "560001",
+      "city": "Bengaluru",
+      "state": "Karnataka",
+      "addressL1": "Flat 402, Green Glen Layout, Bellandur",
+      "termsAccepted": true
+    }
+  }'
+```
 
 ### `goldLoanDetails` Object (Gold Loans Only)
 

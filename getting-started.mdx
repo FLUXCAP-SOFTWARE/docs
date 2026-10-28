@@ -1,6 +1,6 @@
 ## Overview
 
-The EasyCred Partner API lets your backend originate consumer loan applications on EasyCred's platform. You can either hand the customer a ready-made EasyCred screen, or drive every step yourself from your own app.
+The EASYCRED Partner API lets your backend originate consumer loan applications on EASYCRED's platform. You can either hand the customer a ready-made EASYCRED screen, or drive every step yourself from your own app.
 
 This guide walks a partner engineer through a working integration in order: **get credentials → sign requests → start a journey → drive it to a decision → track the outcome**. Each section is self-contained — you can read it top to bottom during onboarding, or jump to a specific step.
 
@@ -29,7 +29,7 @@ You choose the integration mode **per request**, at the moment you start a journ
 
 <CardGroup cols={2}>
   <Card title="Hosted (API_HOSTED)" color="#4f46e5" icon="globe">
-    Starting a journey returns a `hostedUrl`. You redirect or embed it — EasyCred's screens handle OTP, offers, KYC, e-sign and mandate. You just track the final status.
+    Starting a journey returns a `hostedUrl`. You redirect or embed it — EASYCRED's screens handle OTP, offers, KYC, e-sign and mandate. You just track the final status.
 
     **Best for:** The fastest integration — you don't build any loan screens.
   </Card>
@@ -45,7 +45,7 @@ You choose the integration mode **per request**, at the moment you start a journ
 
 <Steps>
   <Step title="Get Your Credentials">
-    Receive your `apiKey` and `signingSecret` from EasyCred at onboarding. Store them immediately — they are shown only once.
+    Receive your `apiKey` and `signingSecret` from EASYCRED at onboarding. Store them immediately — they are shown only once.
   </Step>
   <Step title="Sign Your Requests">
     Every request requires an HMAC-SHA256 signature computed from your `signingSecret`. See [Authentication](/authentication).

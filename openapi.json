@@ -122,17 +122,36 @@
       "CustomerDetails": {
         "type": "object",
         "required": [
-          "fullName",
+          "firstName",
+          "lastName",
           "pan",
           "dob",
           "gender",
           "employmentType",
-          "pinCode"
+          "personalEmail",
+          "pinCode",
+          "city",
+          "state",
+          "addressL1",
+          "termsAccepted"
         ],
         "properties": {
-          "fullName": {
+          "firstName": {
             "type": "string",
-            "example": "Rahul Sharma"
+            "example": "Rahul"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Sharma"
+          },
+          "personalEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "rahul.sharma@example.com"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "example": true
           },
           "pan": {
             "type": "string",
@@ -229,7 +248,6 @@
           "channel",
           "productCode",
           "mobile",
-          "loanAmount",
           "customer"
         ],
         "properties": {
@@ -318,7 +336,6 @@
           "channel",
           "productCode",
           "mobile",
-          "loanAmount",
           "customer"
         ],
         "properties": {
@@ -1095,16 +1112,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 150000,
                     "customer": {
-                      "fullName": "Rahul Sharma",
+                      "firstName": "Rahul",
+                      "lastName": "Sharma",
                       "pan": "ABCDE1234F",
                       "dob": "1992-06-15",
                       "gender": "MALE",
                       "employmentType": "salaried",
                       "monthlyIncome": 65000,
+                      "personalEmail": "rahul.sharma@example.com",
                       "pinCode": "560001",
                       "city": "Bengaluru",
                       "state": "Karnataka",
-                      "addressL1": "Flat 402, Green Glen Layout, Bellandur"
+                      "addressL1": "Flat 402, Green Glen Layout, Bellandur",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1116,16 +1136,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 25000,
                     "customer": {
-                      "fullName": "Ananya Verma",
+                      "firstName": "Ananya",
+                      "lastName": "Verma",
                       "pan": "BCDEF2345G",
                       "dob": "1997-09-20",
                       "gender": "FEMALE",
                       "employmentType": "salaried",
                       "monthlyIncome": 35000,
+                      "personalEmail": "ananya.verma@example.com",
                       "pinCode": "110001",
                       "city": "New Delhi",
                       "state": "Delhi",
-                      "addressL1": "Connaught Place"
+                      "addressL1": "Connaught Place",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1137,18 +1160,21 @@
                     "mobile": "9876543210",
                     "loanAmount": 1000000,
                     "customer": {
-                      "fullName": "Vikram Patel",
+                      "firstName": "Vikram",
+                      "lastName": "Patel",
                       "companyName": "Patel Industrial Solutions Pvt Ltd",
                       "pan": "ABCDE5678G",
                       "dob": "1985-08-22",
                       "gender": "MALE",
                       "employmentType": "selfEmployed",
                       "annualIncome": 4800000,
+                      "personalEmail": "vikram.patel@example.com",
                       "udyamNumber": "UDYAM-KR-03-0123456",
                       "pinCode": "400051",
                       "city": "Mumbai",
                       "state": "Maharashtra",
-                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex"
+                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1160,16 +1186,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 200000,
                     "customer": {
-                      "fullName": "Sunita Verma",
+                      "firstName": "Sunita",
+                      "lastName": "Verma",
                       "pan": "FGHIJ5678K",
                       "dob": "1988-04-10",
                       "gender": "FEMALE",
                       "employmentType": "selfEmployed",
                       "monthlyIncome": 40000,
+                      "personalEmail": "sunita.verma@example.com",
                       "pinCode": "110024",
                       "city": "New Delhi",
                       "state": "Delhi",
-                      "addressL1": "A-45, Lajpat Nagar 4"
+                      "addressL1": "A-45, Lajpat Nagar 4",
+                      "termsAccepted": true
                     },
                     "goldLoanDetails": {
                       "jewellaryList": [
@@ -1438,16 +1467,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 150000,
                     "customer": {
-                      "fullName": "Rahul Sharma",
+                      "firstName": "Rahul",
+                      "lastName": "Sharma",
                       "pan": "ABCDE1234F",
                       "dob": "1992-06-15",
                       "gender": "MALE",
                       "employmentType": "salaried",
                       "monthlyIncome": 65000,
+                      "personalEmail": "rahul.sharma@example.com",
                       "pinCode": "560001",
                       "city": "Bengaluru",
                       "state": "Karnataka",
-                      "addressL1": "Flat 402, Green Glen Layout, Bellandur"
+                      "addressL1": "Flat 402, Green Glen Layout, Bellandur",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1459,16 +1491,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 25000,
                     "customer": {
-                      "fullName": "Ananya Verma",
+                      "firstName": "Ananya",
+                      "lastName": "Verma",
                       "pan": "BCDEF2345G",
                       "dob": "1997-09-20",
                       "gender": "FEMALE",
                       "employmentType": "salaried",
                       "monthlyIncome": 35000,
+                      "personalEmail": "ananya.verma@example.com",
                       "pinCode": "110001",
                       "city": "New Delhi",
                       "state": "Delhi",
-                      "addressL1": "Connaught Place"
+                      "addressL1": "Connaught Place",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1480,18 +1515,21 @@
                     "mobile": "9876543210",
                     "loanAmount": 1000000,
                     "customer": {
-                      "fullName": "Vikram Patel",
+                      "firstName": "Vikram",
+                      "lastName": "Patel",
                       "companyName": "Patel Industrial Solutions Pvt Ltd",
                       "pan": "ABCDE5678G",
                       "dob": "1985-08-22",
                       "gender": "MALE",
                       "employmentType": "selfEmployed",
                       "annualIncome": 4800000,
+                      "personalEmail": "vikram.patel@example.com",
                       "udyamNumber": "UDYAM-KR-03-0123456",
                       "pinCode": "400051",
                       "city": "Mumbai",
                       "state": "Maharashtra",
-                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex"
+                      "addressL1": "Unit 12, Ground Floor, Bandra Kurla Complex",
+                      "termsAccepted": true
                     }
                   }
                 },
@@ -1503,16 +1541,19 @@
                     "mobile": "9876543210",
                     "loanAmount": 200000,
                     "customer": {
-                      "fullName": "Sunita Verma",
+                      "firstName": "Sunita",
+                      "lastName": "Verma",
                       "pan": "FGHIJ5678K",
                       "dob": "1988-04-10",
                       "gender": "FEMALE",
                       "employmentType": "selfEmployed",
                       "monthlyIncome": 40000,
+                      "personalEmail": "sunita.verma@example.com",
                       "pinCode": "110024",
                       "city": "New Delhi",
                       "state": "Delhi",
-                      "addressL1": "A-45, Lajpat Nagar 4"
+                      "addressL1": "A-45, Lajpat Nagar 4",
+                      "termsAccepted": true
                     },
                     "goldLoanDetails": {
                       "jewellaryList": [

@@ -87,16 +87,17 @@ GET /api/v1/partner/products
 ## Product-Specific Payload Requirements
 
 ### 1. Personal Loan (`ONLINE_PERSONAL`) & Pocket Loan (`ONLINE_SHORT_TERM`)
-Standard applicant parameters inside the `customer` object:
-- `pan`, `dob`, `gender`, `personalEmail`, `mobile`, `pinCode`, `termsAccepted`
-- `employmentType`: `"salaried"` or `"selfEmployed"`
-- `monthlyIncome` (or `annualIncome`)
+Required applicant parameters inside the `customer` object:
+- `firstName`, `lastName` (Mandatory; must match PAN)
+- `pan`, `dob`, `gender`, `personalEmail`, `pinCode`, `city`, `state`, `addressL1`, `termsAccepted` (Mandatory)
+- `employmentType`: `"salaried"` or `"selfEmployed"` (Mandatory)
+- `monthlyIncome` (or `annualIncome`) (Mandatory)
 
 ### 2. Business Loan (`ONLINE_BUSINESS`)
 In addition to standard personal fields, business loan journeys require:
-- `customer.companyName`: Registered enterprise or trade name
-- `customer.employmentType`: Must be `"selfEmployed"`
-- `customer.annualIncome`: Annual business turnover / gross income
+- `customer.companyName`: Registered enterprise or trade name (Mandatory)
+- `customer.employmentType`: Must be `"selfEmployed"` (Mandatory)
+- `customer.annualIncome`: Annual business turnover / gross income (Mandatory)
 
 ### 3. Gold Loan (`ONLINE_GOLD`)
 Requires a dedicated `goldLoanDetails` object in the initiate request:
