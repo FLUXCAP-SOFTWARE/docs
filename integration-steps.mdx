@@ -187,10 +187,10 @@ Branch your code according to `currentNextAction.category`:
 
 | Category | Meaning | Required Action |
 | :--- | :--- | :--- |
-| `POLL` | EASYCRED is processing data in the background | Sleep for `pollIntervalSeconds` and query state again. |
-| `COLLECT` | User selection or input is required | Prompt the user and submit an action payload to `POST /journey/{journeyId}/action`. |
-| `REDIRECT` | External verification required (KYC, e-Sign, e-NACH) | Direct the applicant to `currentNextAction.url`. Upon return, notify EASYCRED via `redirect-returned`. |
-| `TERMINAL` | Journey is concluded | Read `outcome` and cease polling. |
+| `POLL` | EASYCRED is processing data in the background | Sleep for `pollIntervalSeconds` and query state again (`endpoint` is `null`). |
+| `COLLECT` | User selection or input is required | Prompt the user and submit an action payload to `POST /api/v1/partner/journey/{journeyId}/action` (also exposed as `currentNextAction.endpoint`). |
+| `REDIRECT` | External verification required (KYC, e-Sign, e-NACH) | Direct the applicant to `currentNextAction.url`. Upon return, notify EASYCRED via `POST /api/v1/partner/journey/{journeyId}/redirect-returned` (also exposed as `currentNextAction.endpoint`). |
+| `TERMINAL` | Journey is concluded | Read `outcome`, retrieve `loanStatement` on completion, and cease polling (`endpoint` is `null`). |
 
 ---
 
@@ -305,7 +305,7 @@ When `category` is `TERMINAL`, the journey is complete. Read `data.outcome`:
 
 | Outcome | Meaning |
 | :--- | :--- |
-| `COMPLETED` | Loan sanctioned and successfully disbursed. |
+| `COMPLETED` | Loan sanctioned and successfully disbursed. Payload includes authoritative `loanStatement` (Headless / Journey Status) or `data.disbursal` (Webhooks) with net disbursed amount, lender details, and KFS link. |
 | `REJECTED` | The application could not be approved at this time. |
 | `NO_OFFERS_AVAILABLE` | No lending offers matched the applicant's profile. |
 | `OFFLINE_PROCESSING` | Routed to an EASYCRED field officer or branch team for physical fulfillment. |

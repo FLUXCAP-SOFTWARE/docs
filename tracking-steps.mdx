@@ -39,7 +39,7 @@ GET /api/v1/partner/journey/{journeyId}
 **Headers:** Standard HMAC headers (`x-api-key`, `x-timestamp`, `x-nonce`, `x-signature`)  
 *(Works for both Hosted and Headless modes. No `X-Journey-Session` token is required).*
 
-### Response Example
+### Response Example (In-Flight / Terminal Rejection)
 
 ```json
 {
@@ -61,6 +61,58 @@ GET /api/v1/partner/journey/{journeyId}
   }
 }
 ```
+
+### Response Example (Loan Sanctioned & Disbursed)
+
+When the loan is successfully disbursed, `outcome` flips to `"COMPLETED"`, `currentNextAction.endpoint` is `null`, and the response includes the lender-verified `loanStatement` carrying the confirmed payout, repayment terms, and signed Key Fact Statement (KFS) download link:
+
+```json
+{
+  "success": true,
+  "data": {
+    "journeyId": "jrn_99d7be14-8a01-42dd-8a23-e2f3f1e08dad",
+    "productCode": "PERSONAL_LOAN",
+    "channel": "API_HOSTED",
+    "currentNextAction": {
+      "type": "COMPLETED",
+      "category": "TERMINAL",
+      "pollIntervalSeconds": null,
+      "url": null,
+      "endpoint": null
+    },
+    "outcome": "COMPLETED",
+    "startedAt": "2026-11-03T04:47:44.920Z",
+    "loanStatement": {
+      "sellerName": "ZapCash",
+      "loanAmount": 15000,
+      "disbursedAmount": 8996.4,
+      "disbursementDate": "2026-11-03T08:49:16.897Z",
+      "emi": 19500,
+      "interestRate": "1% per day",
+      "apr": "464.17%",
+      "tenure": 1,
+      "processingFeesAmount": 885,
+      "firstDueDate": "2026-12-10T18:30:00.000Z",
+      "statementRef": "01a19fbc-1118-6b8f-2062-2d61390d96d0",
+      "kfsLink": "https://prod.credit.ondc.zapcash.aarthiklabs.com/loan/kfs/...pdf",
+      "installments": [
+        {
+          "paymentId": "1",
+          "paymentType": "INSTALLMENT",
+          "paymentStatus": "NOT_PAID",
+          "amount": 13193.43,
+          "startDate": "2026-11-03T08:14:12.499Z",
+          "endDate": "2026-12-10T18:30:00.000Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+<Note>
+**Proxy Endpoint Mapping:** EASYCRED protects internal vendor architecture (ADR 0001). `currentNextAction.endpoint` always points to EASYCRED proxy routes (such as `/api/v1/partner/journey/{journeyId}/action` during `COLLECT` steps, or `/api/v1/partner/journey/{journeyId}/redirect-returned` during `REDIRECT` returns), and resolves to `null` during `POLL` and `TERMINAL` phases.
+</Note>
 
 ---
 
@@ -92,9 +144,10 @@ GET /api/v1/partner/leads?page=1&limit=20
       {
         "applicationId": "6ae1b47ce5656d0175f6596a",
         "loanType": "PERSONAL_LOAN",
-        "loanAmount": 150000,
-        "status": "POLL_FOR_OFFERS",
-        "submittedAt": "2026-10-28T08:38:20.450Z"
+        "loanAmount": 15000,
+        "status": "COMPLETED",
+        "disbursedAmount": 8996.4,
+        "submittedAt": "2026-11-03T04:47:44.920Z"
       },
       {
         "applicationId": "6ae1aa0ee5656d0175f656f5",
@@ -124,7 +177,7 @@ GET /api/v1/partner/leads/{applicationId}/status
 **Required Scope:** `leads:status:read`  
 **Headers:** Standard HMAC headers  
 
-### Response Example
+### Response Example (In-Flight / Rejected)
 
 ```json
 {
@@ -132,6 +185,21 @@ GET /api/v1/partner/leads/{applicationId}/status
   "data": {
     "applicationId": "6ae1aa0ee5656d0175f656f5",
     "status": "NO_OFFERS_AVAILABLE"
+  }
+}
+```
+
+### Response Example (Disbursed)
+
+When the loan has completed disbursal, the status returns `"COMPLETED"` along with the confirmed net proceeds credited to the borrower:
+
+```json
+{
+  "success": true,
+  "data": {
+    "applicationId": "6ae1b47ce5656d0175f6596a",
+    "status": "COMPLETED",
+    "disbursedAmount": 8996.4
   }
 }
 ```

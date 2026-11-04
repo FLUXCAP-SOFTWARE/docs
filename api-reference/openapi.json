@@ -499,6 +499,21 @@
                 "items": {
                   "$ref": "#/components/schemas/LenderOffer"
                 }
+              },
+              "loanStatement": {
+                "type": "object",
+                "description": "Lender-confirmed loan statement and repayment schedule on completion",
+                "properties": {
+                  "sellerName": { "type": "string", "example": "ZapCash" },
+                  "loanAmount": { "type": "number", "example": 15000 },
+                  "disbursedAmount": { "type": "number", "example": 8996.4 },
+                  "disbursementDate": { "type": "string", "example": "2026-11-03T08:49:16.897Z" },
+                  "emi": { "type": "number", "example": 19500 },
+                  "interestRate": { "type": "string", "example": "1% per day" },
+                  "apr": { "type": "string", "example": "464.17%" },
+                  "firstDueDate": { "type": "string", "example": "2026-12-10T18:30:00.000Z" },
+                  "kfsLink": { "type": "string", "example": "https://prod.credit.ondc.zapcash.aarthiklabs.com/loan/kfs/...pdf" }
+                }
               }
             }
           }
@@ -1343,7 +1358,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "": "#/components/schemas/JourneyStateResponse"
+                  "$ref": "#/components/schemas/JourneyStateResponse"
                 }
               }
             }
@@ -1353,7 +1368,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "": "#/components/schemas/ApiError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1363,7 +1378,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "": "#/components/schemas/ApiError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1373,7 +1388,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "": "#/components/schemas/ApiError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1383,7 +1398,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "": "#/components/schemas/ApiError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }

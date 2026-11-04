@@ -163,7 +163,9 @@ The EASYCRED journey engine emits five canonical event types:
 
 ## Webhook Payload Format
 
-EASYCRED sends HTTP `POST` requests with `Content-Type: application/json` containing the following structure:
+EASYCRED sends HTTP `POST` requests with `Content-Type: application/json`.
+
+#### In-Flight Update (`journey.updated`)
 
 ```json
 {
@@ -181,6 +183,35 @@ EASYCRED sends HTTP `POST` requests with `Content-Type: application/json` contai
 }
 ```
 
+#### Disbursal Milestone (`journey.completed`)
+
+When the loan has been confirmed and disbursed by the lender, EASYCRED emits `journey.completed` with `outcome: "COMPLETED"` and the authoritative lender `disbursal` confirmation:
+
+```json
+{
+  "id": "evt_8b9c0d1e-2f34-5678-9012-bcdef1234567",
+  "type": "journey.completed",
+  "createdAt": "2026-11-03T08:49:17.000Z",
+  "data": {
+    "journeyId": "jrn_99d7be14-8a01-42dd-8a23-e2f3f1e08dad",
+    "productCode": "ONLINE_PERSONAL",
+    "channel": "API_HOSTED",
+    "nextActionType": "COMPLETED",
+    "nextActionCategory": "TERMINAL",
+    "outcome": "COMPLETED",
+    "disbursal": {
+      "disbursedAmount": 8996.4,
+      "disbursementDate": "2026-11-03T08:49:16.897Z",
+      "loanAmount": 15000,
+      "sellerName": "ZapCash",
+      "emi": 19500,
+      "firstDueDate": "2026-12-10T18:30:00.000Z",
+      "kfsLink": "https://prod.credit.ondc.zapcash.aarthiklabs.com/loan/kfs/...pdf"
+    }
+  }
+}
+```
+
 ### Payload Fields
 
 | Field | Type | Description |
@@ -191,9 +222,17 @@ EASYCRED sends HTTP `POST` requests with `Content-Type: application/json` contai
 | `data.journeyId` | string | The EASYCRED journey identifier (`jrn_<uuid>`) returned at initiation. |
 | `data.productCode` | string | Loan product code (`ONLINE_PERSONAL`, `ONLINE_SHORT_TERM`, `ONLINE_BUSINESS`, `ONLINE_GOLD`). |
 | `data.channel` | string | Journey channel (`"API_HOSTED"` or `"API_HEADLESS"`). |
-| `data.nextActionType` | string | Current state/action name (e.g. `OFFER_SELECTION`, `DISBURSED`, `REJECTED`). |
+| `data.nextActionType` | string | Current state/action name (e.g. `OFFER_SELECTION`, `COMPLETED`, `REJECTED`). |
 | `data.nextActionCategory` | string | Category: `POLL`, `COLLECT`, `REDIRECT`, or `TERMINAL`. |
 | `data.outcome` | string \| null | Terminal outcome string (`COMPLETED`, `REJECTED`, `NO_OFFERS_AVAILABLE`, etc.) or `null` if active. |
+| `data.disbursal` | object \| undefined | Present on `journey.completed`. Contains lender-verified payout and terms: |
+| `data.disbursal.disbursedAmount` | number | Net loan amount credited to borrower's bank account. |
+| `data.disbursal.disbursementDate` | string | ISO 8601 timestamp of loan disbursal. |
+| `data.disbursal.loanAmount` | number | Total sanctioned loan principal. |
+| `data.disbursal.sellerName` | string | Disbursing banking / lending partner name. |
+| `data.disbursal.emi` | number | Monthly installment amount. |
+| `data.disbursal.firstDueDate` | string | First repayment due date. |
+| `data.disbursal.kfsLink` | string | Direct URL to the signed Key Fact Statement (KFS) PDF. |
 
 ---
 
