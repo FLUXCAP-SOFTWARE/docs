@@ -73,24 +73,26 @@ Select your mode per request using the `channel` property:
 
 <CardGroup cols={2}>
   <Card title="Hosted (API_HOSTED)" icon="globe">
-    Returns a `hostedUrl`. Redirect the borrower or load it in a WebView. EASYCRED handles credit checks, offer display, KYC, e-NACH mandate, and e-Sign.
+    Returns a `hostedUrl`. Redirect the borrower. EASYCRED handles credit checks, offer display, e-KYC, e-NACH mandate, and e-sign.
 
     **Best for:** Immediate launch with zero UI development.
   </Card>
 
   <Card title="Headless (API_HEADLESS)" icon="terminal">
-    Returns a `journeySession` token. Your backend controls the borrower experience over REST, reading state, submitting user selections, and presenting third-party verification links.
+    Complete white-labelled solution. Your backend controls the borrower experience over REST, reading state, submitting user selections, and presenting third-party verification links.
 
     **Best for:** Native, fully branded mobile or web user experiences.
   </Card>
 </CardGroup>
 
+See more details:  [Methods of API Usage](/methods-of-api-usage).
+
 ---
 
 ## Integration Workflow
 
-1. **Obtain Credentials:** Receive your `apiKey` and `signingSecret` from the EASYCRED Partner Portal.
-2. **Implement Request Signing:** Every request requires an HMAC-SHA256 signature generated using your `signingSecret` (see [Authentication](/authentication)).
+1. **Obtain Credentials:** Receive your `API_KEY` and `SIGNING_SECRET` from us.
+2. **Implement Request Signing:** Every request requires an HMAC-SHA256 signature generated using your `SIGNING_SECRET`(see [Authentication](/authentication)).
 3. **Initiate Journey:** Submit customer details to `POST /v1/partner/journey/initiate`.
-4. **Drive & Conclude:** Poll state and post actions (Headless) or direct borrower to the hosted URL (Hosted).
+4. **Drive & Conclude:** Drive the journey as per selected channel, `HOSTED `or `HEADLESS`.
 5. **Track Status:** Subscribe to webhooks or poll the status endpoint for real-time progress updates.

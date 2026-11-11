@@ -22,7 +22,7 @@ Your API key has access to a configured set of loan products via `productAccess`
   <Card title="Pocket Loan" icon="zap">
     **Product Code:** `ONLINE_SHORT_TERM`
 
-    Instant short-term personal credit (₹5,000 to ₹50,000) with rapid evaluation and swift disbursal.
+    Instant short-term personal credit up to ₹50,000 with rapid evaluation and swift disbursal.
   </Card>
 
   <Card title="Business Loan" icon="briefcase">
@@ -34,7 +34,7 @@ Your API key has access to a configured set of loan products via `productAccess`
   <Card title="Gold Loan" icon="coins">
     **Product Code:** `ONLINE_GOLD`
 
-    Secured loan backed by physical gold jewellery, including branch selection and valuation.
+    Secured loan backed by physical gold jewellery, including branch selection and evaluation by the lender.
   </Card>
 </CardGroup>
 
@@ -86,20 +86,23 @@ GET /api/v1/partner/products
 
 ## Product-Specific Payload Requirements
 
-### 1. Personal Loan (`ONLINE_PERSONAL`) & Pocket Loan (`ONLINE_SHORT_TERM`)
+### 1. Personal Loan & Pocket Loan
+
 Required applicant parameters inside the `customer` object:
 - `firstName`, `lastName` (Mandatory; must match PAN)
 - `pan`, `dob`, `gender`, `personalEmail`, `pinCode`, `city`, `state`, `addressL1`, `termsAccepted` (Mandatory)
 - `employmentType`: `"salaried"` or `"selfEmployed"` (Mandatory)
-- `monthlyIncome` (or `annualIncome`) (Mandatory)
+- `monthlyIncome` (or `annualIncome`) (Mandatory, Any one)
 
-### 2. Business Loan (`ONLINE_BUSINESS`)
+### 2. Business Loan 
+
 In addition to standard personal fields, business loan journeys require:
-- `customer.companyName`: Registered enterprise or trade name (Mandatory)
-- `customer.employmentType`: Must be `"selfEmployed"` (Mandatory)
-- `customer.annualIncome`: Annual business turnover / gross income (Mandatory)
+- `companyName`: Registered enterprise or trade name (Mandatory)
+- `employmentType`: Must be `"selfEmployed"` (Mandatory)
+- `annualIncome`: Annual business turnover / gross income (Mandatory)
 
-### 3. Gold Loan (`ONLINE_GOLD`)
+### 3. Gold Loan 
+
 Requires a dedicated `goldLoanDetails` object in the initiate request:
 
 | Field | Type | Required | Description |

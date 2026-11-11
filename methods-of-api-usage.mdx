@@ -1,6 +1,6 @@
 ---
 title: "Methods of API Usage"
-description: "Choose between Hosted and Headless integration modes for originating loans on EASYCRED."
+description: "Choose between Hosted or Headless mode of integration for originating loans on EASYCRED."
 sidebarTitle: "Methods of API Usage"
 ---
 
@@ -12,9 +12,10 @@ EASYCRED offers two integration modes. Select the mode per application when call
 | :--- | :--- | :--- |
 | **Response Payload** | `hostedUrl` | `journeySession` token |
 | **User Interface** | EASYCRED provides the complete UI | You design and build the borrower UI |
-| **Step Handling** | Managed by EASYCRED (offers, KYC, e-NACH, e-Sign) | Driven by your backend over REST |
-| **Referral Offers** | Rendered automatically on the hosted screen | Delivered in `data.referralOffers[]` for custom UI rendering |
-| **Best For** | Fastest go-live; zero frontend development | Deep native app integration with full UX ownership |
+| **Logic and Backend** | EASYCRED handles everything. | You build your complete backend |
+| **Step Handling** | Managed by EASYCRED | Driven by your backend over REST APIs |
+| **Offers** | Rendered automatically on the hosted screen | Delivered in the API to be handled by your backend. |
+| **Best For** | Faster Go-to-Market and less development effort | Deep native app/web integration with full UI/UX ownership. |
 
 ---
 
@@ -25,16 +26,33 @@ Start a journey and receive a single-use `hostedUrl`. Direct the customer to the
 ```http
 POST /v1/partner/journey/initiate
 ```
-```json
+
+```json Request
 {
   "channel": "API_HOSTED",
   "productCode": "ONLINE_PERSONAL",
-  "mobile": "9876543210",
-  "customer": { ... }
+  "mobile": "9883739386",
+  "customer": {
+    "firstName": "Test",
+    "lastName": "Borrower",
+    "pan": "DJHPG8765E",
+    "dob": "1990-05-01",
+    "gender": "MALE",
+    "personalEmail": "test.borrower@example.com",
+    "employmentType": "salaried",
+    "companyName": "TCS Ltd",
+    "monthlyIncome": 32000,
+    "addressL1": "MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pinCode": "560001",
+    "termsAccepted": true
+  }
 }
 ```
 
-EASYCRED manages the borrower through all intermediate phases: offer selection, KYC verification, mandate registration, e-Sign, and secondary referral offers (like Apollo Finvest).
+```json Response
+```
 
 **Tracking Progress:**
 - Poll application status: `GET /api/v1/partner/leads/{applicationId}/status`
@@ -49,12 +67,28 @@ Your backend controls the applicant experience. Starting the journey returns a `
 ```http
 POST /v1/partner/journey/initiate
 ```
-```json
+
+```json Request
 {
   "channel": "API_HEADLESS",
   "productCode": "ONLINE_PERSONAL",
-  "mobile": "9876543210",
-  "customer": { ... }
+  "mobile": "9883739386",
+  "customer": {
+    "firstName": "Test",
+    "lastName": "Borrower",
+    "pan": "DJHPG8765E",
+    "dob": "1990-05-01",
+    "gender": "MALE",
+    "personalEmail": "test.borrower@example.com",
+    "employmentType": "salaried",
+    "companyName": "TCS Ltd",
+    "monthlyIncome": 32000,
+    "addressL1": "MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pinCode": "560001",
+    "termsAccepted": true
+  }
 }
 ```
 
